@@ -37,8 +37,8 @@ public class QAController {
 	@Autowired
 	private EdmCalculatorFacade calculatorFacade;
 
-	@Autowired
-	private MongoMappingDao mongoMappingDao;
+	// @Autowired
+	// private MongoMappingDao mongoMappingDao;
 
 	@Autowired
 	private MongoDatabase mongoDb;
