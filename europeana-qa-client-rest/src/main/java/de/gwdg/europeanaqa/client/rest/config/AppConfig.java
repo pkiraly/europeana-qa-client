@@ -48,6 +48,7 @@ public class AppConfig {
 		return mongoDb;
 	}
 
+	/*
 	@Bean
 	MongoMappingDao getMongoMappingDao() {
 		Morphia morphia = new Morphia();
@@ -55,6 +56,7 @@ public class AppConfig {
 		morphia.mapPackage("eu.europeana.metis.mapping", true);
 		return new MongoMappingDao(morphia, client, db);
 	}
+	*/
 
 	@Bean
 	EdmCalculatorFacade getCalculatorFacade() {

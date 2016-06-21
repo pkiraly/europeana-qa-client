@@ -9,9 +9,9 @@ import org.mongodb.morphia.dao.BasicDAO;
  *
  * @author Péter Király <peter.kiraly at gwdg.de>
  */
-public class MongoMappingDao extends BasicDAO<Mapping, String> {
+public class MongoMappingDao { //extends BasicDAO<Mapping, String> {
 
 	public MongoMappingDao(Morphia morphia, MongoClient mongo, String database) {
-		super(mongo, morphia, database);
+		// super(mongo, morphia, database);
 	}
 }
