@@ -1,9 +1,9 @@
 package de.gwdg.europeanaqa.client.rest.config;
 
 import com.mongodb.MongoClient;
-import eu.europeana.metis.mapping.Mapping;
+// import eu.europeana.metis.mapping.Mapping;
 import org.mongodb.morphia.Morphia;
-import org.mongodb.morphia.dao.BasicDAO;
+// import org.mongodb.morphia.dao.BasicDAO;
 
 /**
  *
