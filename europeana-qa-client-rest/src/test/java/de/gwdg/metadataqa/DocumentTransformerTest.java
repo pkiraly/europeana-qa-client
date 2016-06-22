@@ -1922,7 +1922,7 @@ public class DocumentTransformerTest {
 				}
 			}
 		}
-		
+
 		// String json = record.toJson(codec);
 		// System.err.println("json: " + json);
 	}
