@@ -13,6 +13,7 @@ import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -49,7 +50,8 @@ public class QAController {
 	@Autowired
 	DocumentTransformer transformer;
 
-	@RequestMapping(value = "/csv/{part1}/{part2}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{part1}/{part2}.csv", method = RequestMethod.GET,
+		produces = "text/csv")
 	public String getCsv(
 			  @PathVariable("part1") String part1,
 			  @PathVariable("part2") String part2
@@ -60,7 +62,8 @@ public class QAController {
 		return calculatorFacade.measure(json);
 	}
 
-	@RequestMapping(value = "/json/{part1}/{part2}", method = RequestMethod.GET)
+	@RequestMapping(value = "/{part1}/{part2}.json", method = RequestMethod.GET,
+		produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public @ResponseBody
 	Result getJson(
 			  @PathVariable("part1") String part1,

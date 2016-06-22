@@ -1,10 +1,12 @@
 package de.gwdg.metadataqa;
 
+import com.jayway.jsonpath.InvalidJsonException;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import de.gwdg.europeanaqa.api.calculator.EdmCalculatorFacade;
 import de.gwdg.europeanaqa.client.rest.DocumentTransformer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import static junit.framework.TestCase.*;
@@ -30,6 +32,13 @@ public class DocumentTransformerTest {
 	MongoDatabase mongoDb;
 	EdmCalculatorFacade calculator;
 	DocumentTransformer transformer;
+
+	List<String> exceptions = Arrays.asList("title", "type", "europeanaCompleteness",
+		"optOut", "europeanaCollectionName", "identifier", "sets", "year",
+		"language", "timestampCreated", "timestampUpdated", "provider",
+		"country");
+
+	List<String> fieldExceptions = Arrays.asList("@about");
 
 	public DocumentTransformerTest() {
 	}
@@ -1803,12 +1812,6 @@ public class DocumentTransformerTest {
 				  "/92099/BibliographicResource_1000157170729"
 		);
 
-		List<String> exceptions = Arrays.asList("title", "type", "europeanaCompleteness",
-				  "optOut", "europeanaCollectionName", "identifier", "sets", "year",
-				  "language", "timestampCreated", "timestampUpdated", "provider",
-				  "country");
-
-		List<String> fieldExceptions = Arrays.asList("@about");
 
 		for (String id : ids) {
 			Document record = getRecord(id);
@@ -1816,41 +1819,13 @@ public class DocumentTransformerTest {
 				continue;
 			}
 
-			assertNotNull(record);
-			String json = record.toJson(codec);
-			assertNotNull(json);
-			String csv = calculator.measure(json);
-			for (String key : record.keySet()) {
-				if (!exceptions.contains(key)) {
-					assertTrue(String.format("root key '%s' should contain an ':' @%s", key, id), key.contains(":"));
-				}
-				if (record.get(key) instanceof List) {
-					if (((List) record.get(key)).size() == 0) {
-						// 
-					} else if (((List) record.get(key)).get(0) instanceof Document) {
-						List<Document> entities = (List) record.get(key);
-						for (Document entity : entities) {
-							for (String ekey : entity.keySet()) {
-								if (!fieldExceptions.contains(ekey)) {
-									assertTrue(
-											  String.format("key '%s' (in %s) should contain an ':' (%s) @%s::%s",
-														 ekey, key, entity.get(ekey), id, key),
-											  ekey.contains(":")
-									);
-								}
-							}
-						}
-					} else {
-						//
-					}
-				}
-			}
-			assertNotNull(json);
+			testFieldNames(record, id);
+			testLanguages(record, id);
 		}
 	}
 
 	@Test
-	public void anotherTest() {
+	public void testLanguages() {
 		List<String> ids = Arrays.asList(
 				"/2021631/afbeelding_34f1a43e_501d_a467_3af4_cf5f330f8b04",
 				"/2021647/beeldbank_weergave_record_id_0004c399_9cd5_c9ac_5f0f_2ba102e737aa",
@@ -1873,10 +1848,83 @@ public class DocumentTransformerTest {
 		);
 		for (String id : ids) {
 			Document record = getRecord(id);
-			assertNotNull(record);
-			String json = record.toJson(codec);
-			System.err.println("json: " + json);
+			if (record == null) {
+				continue;
+			}
+			testLanguages(record, id);
 		}
+	}
+
+	private void testFieldNames(Document record, String id) throws InvalidJsonException {
+		if (record == null) {
+			return;
+		}
+		assertNotNull(record);
+		String json = record.toJson(codec);
+		assertNotNull(json);
+		String csv = calculator.measure(json);
+		for (String key : record.keySet()) {
+			if (!exceptions.contains(key)) {
+				assertTrue(String.format("root key '%s' should contain an ':' @%s", key, id), key.contains(":"));
+			}
+			if (record.get(key) instanceof List) {
+				if (((List) record.get(key)).size() == 0) {
+					//
+				} else if (((List) record.get(key)).get(0) instanceof Document) {
+					List<Document> entities = (List) record.get(key);
+					for (Document entity : entities) {
+						for (String ekey : entity.keySet()) {
+							if (!fieldExceptions.contains(ekey)) {
+								assertTrue(
+										  String.format("key '%s' (in %s) should contain an ':' (%s) @%s::%s",
+													 ekey, key, entity.get(ekey), id, key),
+										  ekey.contains(":")
+								);
+							}
+						}
+					}
+				} else {
+					//
+				}
+			}
+		}
+		assertNotNull(json);
+	}
+
+	private void testLanguages(Document record, String id) {
+		// System.err.println(id);
+		if (record == null) {
+			return;
+		}
+		// System.err.println(record.toJson(codec));
+		assertNotNull(record);
+		for (String key : record.keySet()) {
+			if (key.contains(":")
+					  && record.get(key) instanceof ArrayList
+					  && ((List)record.get(key)).size() > 0
+					  && ((List)record.get(key)).get(0) instanceof Document)
+			{
+				// System.err.println(String.format("%s", key));
+				List<Document> entities = (List)record.get(key);
+				for (Document entity : entities) {
+					for (String ekey : entity.keySet()) {
+						if (entity.get(ekey) instanceof Document) {
+							Document field = (Document) entity.get(ekey);
+							System.err.println(String.format(" \t key: %s: %s",
+									  ekey, entity.get(ekey).getClass().getCanonicalName()));
+							for (String fkey : field.keySet()) {
+								System.err.println(String.format(" \t\t key: %s: %s",
+										  fkey, (field.get(fkey) != null ? field.get(fkey).getClass().getCanonicalName() : "null")));
+							}
+						}
+						assertFalse(String.format("field '%s' is a Document (in %s - %s)", ekey, key, id), entity.get(ekey) instanceof Document);
+					}
+				}
+			}
+		}
+		
+		// String json = record.toJson(codec);
+		// System.err.println("json: " + json);
 	}
 
 	private Document getRecord(String recordId) {

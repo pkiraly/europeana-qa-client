@@ -47,13 +47,32 @@ public class DocumentTransformer {
 	};
 
 	private final static List<String> languageFields = Arrays.asList(
-			  "prefLabel",
+			  "prefLabel", "altLabel", "note",
+
 			  "edmDataProvider", "edmProvider", "edmRights", "edmLanguage",
-			  "edmCountry",
-			  "dcSubject", "dcTitle", "dcType", "dcCreator", "dcFormat", "dcPublisher",
-			  "dcRights",
-			  "dctermsCreated", "dctermsExtent", "dctermsIsPartOf", "dctermsIsReferencedBy",
-			  "dctermsSpatial"
+			  "edmCountry", "year", "begin", "edmCurrentLocation", "end",
+			  "edmHasMet", "edmHasType", "hasView", "edmIncorporates",
+			  "edmIsDerivativeOf", "edmIsNextInSequence", "edmIsRelatedTo",
+			  "edmIsRepresentationOf", "edmIsSimilarTo", "edmIsSuccessorOf",
+			  "edmIsShownBy", "edmIsShownAt", "edmLanguage", "edmLandingPage",
+			  "edmObject", "edmPreview", "edmProvider", "edmRealizes",
+			  "edmRights", "edmType", "edmUgc", "edmUnstored", "edmPreviewNoDistribute",
+
+			  "dcContributor", "dcCoverage", "dcSubject", "dcCreator", "dcDate",
+			  "dcDescription", "dcFormat", "dcIdentifier", "dcLanguage",
+			  "dcPublisher", "dcRelation", "dcRights", "dcSource", "dcSubject",
+			  "dcTitle", "dcType", "dctermsTOC",
+
+			  "dctermsAlternative", "dctermsCreated", "dctermsExtent", "dctermsHasPart",
+			  "dctermsIsFormatOf", "dctermsIsPartOf", "dctermsIsReferencedBy",
+			  "dctermsIssued", "dctermsIsVersionOf", "dctermsMedium",
+			  "dctermsProvenance", "dctermsReferences", "dctermsSpatial", "isPartOf", "dctermsTemporal",
+
+			  "rdaGr2BiographicalInformation", "rdaGr2DateOfBirth", "rdaGr2DateOfDeath",
+			  "rdaGr2DateOfEstablishment", "rdaGr2DateOfTermination", "rdaGr2Gender",
+			  "rdaGr2ProfessionOrOccupation", "rdaGr2PlaceOfBirth", "rdaGr2PlaceOfDeath",
+
+			  "foafName"
 	);
 
 	private final static Map<String, String> fieldDictionary = new HashMap<String, String>() {
@@ -266,8 +285,10 @@ public class DocumentTransformer {
 	}
 
 	private void transformLanguageStructure(Document doc) {
-		for (String field : languageFields) {
-			if (doc.containsKey(field)) {
+		for (String field : fieldDictionary.keySet()) {
+			if (doc.containsKey(field)
+					&& doc.get(field) instanceof Document)
+			{
 				replaceLanguage(doc, field);
 			}
 		}
@@ -278,14 +299,16 @@ public class DocumentTransformer {
 		List<Object> instances = new ArrayList<>();
 		for (String lang : field.keySet()) {
 			List<String> values = (List<String>) field.get(lang);
-			for (String value : values) {
-				if (!lang.equals("def")) {
-					Document instance = new Document();
-					instance.append("@lang", lang);
-					instance.append("#value", value);
-					instances.add(instance);
-				} else {
-					instances.add(value);
+			if (values != null && values.size() > 0) {
+				for (String value : values) {
+					if (!lang.equals("def")) {
+						Document instance = new Document();
+						instance.append("@lang", lang);
+						instance.append("#value", value);
+						instances.add(instance);
+					} else {
+						instances.add(value);
+					}
 				}
 			}
 		}
