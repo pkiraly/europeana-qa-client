@@ -79,6 +79,8 @@ public class QAController {
 	) throws URISyntaxException, IOException {
 		String recordId = String.format(RECORDID_TPL, part1, part2);
 		String json = getRecordAsJson(recordId);
+		if (config.getRunUniqueness())
+			calculatorFacade.collectTfIdfTerms(true);
 		calculatorFacade.measure(json);
 
 		Result result = new Result();
