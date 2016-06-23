@@ -4,11 +4,11 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import de.gwdg.europeanaqa.api.calculator.EdmCalculatorFacade;
 import de.gwdg.europeanaqa.client.rest.DocumentTransformer;
-import de.gwdg.europeanaqa.client.rest.config.AppConfig;
-import de.gwdg.europeanaqa.client.rest.config.MongoMappingDao;
+import de.gwdg.europeanaqa.client.rest.config.ApplicationConfiguration;
 import de.gwdg.europeanaqa.client.rest.model.Result;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.logging.Logger;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.conversions.Bson;
@@ -31,9 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class QAController {
 
 	private final static String RECORDID_TPL = "/%s/%s";
+	Logger logger = Logger.getLogger(QAController.class.getCanonicalName());
 
 	@Autowired
-	AppConfig config;
+	ApplicationConfiguration config;
 
 	@Autowired
 	private EdmCalculatorFacade calculatorFacade;
@@ -50,6 +51,13 @@ public class QAController {
 	@Autowired
 	DocumentTransformer transformer;
 
+	@RequestMapping(value = "/hello", method = RequestMethod.GET)
+	public String hello() throws URISyntaxException, IOException {
+		// return this.getClass().getClassLoader().getResource("europeana-qa.custom.properties").toString();
+		// return System.getProperty("java.class.path");
+		return config.getMongoDb() + ", " + config.getRunUniqueness();
+	}
+
 	@RequestMapping(value = "/{part1}/{part2}.csv", method = RequestMethod.GET,
 		produces = "text/csv")
 	public String getCsv(
@@ -63,7 +71,7 @@ public class QAController {
 	}
 
 	@RequestMapping(value = "/{part1}/{part2}.json", method = RequestMethod.GET,
-		produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+		produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody
 	Result getJson(
 			  @PathVariable("part1") String part1,
@@ -78,7 +86,8 @@ public class QAController {
 		result.setExistingFields(calculatorFacade.getExistingFields());
 		result.setMissingFields(calculatorFacade.getMissingFields());
 		result.setEmptyFields(calculatorFacade.getEmptyFields());
-		// result.setTermsCollection(calculatorFacade.getTermsCollection());
+		if (config.getRunUniqueness())
+			result.setTermsCollection(calculatorFacade.getTermsCollection());
 
 		return result;
 	}
@@ -86,6 +95,7 @@ public class QAController {
 	private String getRecordAsJson(String recordId) {
 		Bson condition = Filters.eq("about", recordId);
 		Document record = mongoDb.getCollection("record").find(condition).first();
+		logger.info("record: " + record.toJson(codec));
 		transformer.transform(record);
 		String json = record.toJson(codec);
 		return json;
