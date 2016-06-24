@@ -144,11 +144,14 @@ public class DocumentTransformer {
 			// edm
 			put("aggregatedCHO", "edm:aggregatedCHO");
 			put("begin", "edm:begin");
+			put("edmcodecName", "edm:codecName");
+			put("edmcomponentColor", "edm:componentColor");
 			put("edmCountry", "edm:country");
 			put("edmCurrentLocation", "edm:currentLocation");
 			put("edmDataProvider", "edm:dataProvider");
 			put("end", "edm:end");
 			put("europeanaProxy", "edm:europeanaProxy");
+			put("edmhasColorSpace", "edm:hasColorSpace");
 			put("edmHasMet", "edm:hasMet");
 			put("edmHasType", "edm:hasType");
 			put("hasView", "edm:hasView");
@@ -169,9 +172,11 @@ public class DocumentTransformer {
 			put("edmProvider", "edm:provider");
 			put("edmRealizes", "edm:realizes");
 			put("edmRights", "edm:rights");
+			put("edmspatialResolution", "edm:spatialResolution");
 			put("edmType", "edm:type");
 			put("edmUgc", "edm:ugc");
 			put("edmUnstored", "edm:unstored");
+			put("edmWasPresentAt", "edm:wasPresentAt");
 			put("year", "edm:year");
 			// not in http://labs.europeana.eu/api/data-fields
 			put("edmPreviewNoDistribute", "edm:previewNoDistribute");
