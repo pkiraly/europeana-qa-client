@@ -54,8 +54,8 @@ public class QAController {
 	@RequestMapping(value = "/hello", method = RequestMethod.GET)
 	public String hello() throws URISyntaxException, IOException {
 		// return this.getClass().getClassLoader().getResource("europeana-qa.custom.properties").toString();
-		// return System.getProperty("java.class.path");
-		return config.getMongoDb() + ", " + config.getRunUniqueness();
+		return System.getProperty("java.class.path");
+		// return config.getMongoDb() + ", " + config.getRunUniqueness();
 	}
 
 	@RequestMapping(value = "/{part1}/{part2}.csv", method = RequestMethod.GET,
