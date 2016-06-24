@@ -152,6 +152,7 @@ public class DocumentTransformer {
 			put("edmHasMet", "edm:hasMet");
 			put("edmHasType", "edm:hasType");
 			put("hasView", "edm:hasView");
+			put("edmHasView", "edm:hasView");
 			put("edmIncorporates", "edm:incorporates");
 			put("edmIsDerivativeOf", "edm:isDerivativeOf");
 			put("edmIsNextInSequence", "edm:isNextInSequence");
@@ -178,6 +179,7 @@ public class DocumentTransformer {
 			// ore
 			put("proxyIn", "ore:proxyIn");
 			put("proxyFor", "ore:proxyFor");
+			put("aggregates", "ore:aggregates");
 
 			// wgs84 or wgs84_pos?
 			put("longitude", "wgs84:long");
