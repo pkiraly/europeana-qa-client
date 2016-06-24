@@ -29,8 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class QAController {
 
-	private final static String RECORDID_TPL = "/%s/%s";
 	Logger logger = Logger.getLogger(QAController.class.getCanonicalName());
+
+	private final static String RECORDID_TPL = "/%s/%s";
 
 	@Autowired
 	ApplicationConfiguration config;
@@ -58,7 +59,7 @@ public class QAController {
 	}
 
 	@RequestMapping(value = "/record/{part1}/{part2}", method = RequestMethod.GET,
-		produces = MediaType.APPLICATION_JSON_VALUE)
+		produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public String getRecord(
 			  @PathVariable("part1") String part1,
 			  @PathVariable("part2") String part2
@@ -81,7 +82,7 @@ public class QAController {
 	}
 
 	@RequestMapping(value = "/{part1}/{part2}.json", method = RequestMethod.GET,
-		produces = MediaType.APPLICATION_JSON_VALUE)
+		produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public @ResponseBody
 	Result getJson(
 			  @PathVariable("part1") String part1,
@@ -107,7 +108,7 @@ public class QAController {
 	private String getRecordAsJson(String recordId) {
 		Bson condition = Filters.eq("about", recordId);
 		Document record = mongoDb.getCollection("record").find(condition).first();
-		logger.info("record: " + record.toJson(codec));
+		// logger.info("record: " + record.toJson(codec));
 		transformer.transform(record);
 		String json = record.toJson(codec);
 		return json;

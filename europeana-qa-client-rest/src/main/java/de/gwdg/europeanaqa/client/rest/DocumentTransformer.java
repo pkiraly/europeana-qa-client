@@ -10,17 +10,21 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import org.bson.Document;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.json.JsonWriterSettings;
 
 /**
  *
  * @author Péter Király <peter.kiraly at gwdg.de>
  */
 public class DocumentTransformer {
+
+	Logger logger = Logger.getLogger(DocumentTransformer.class.getCanonicalName());
 
 	DocumentCodec codec;
 	MongoDatabase mongoDb;
