@@ -27,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Controller
 @RestController
-@RequestMapping(value = "/europeana-qa")
 public class QAController {
 
 	private final static String RECORDID_TPL = "/%s/%s";
@@ -56,6 +55,17 @@ public class QAController {
 		// return this.getClass().getClassLoader().getResource("europeana-qa.custom.properties").toString();
 		return System.getProperty("java.class.path");
 		// return config.getMongoDb() + ", " + config.getRunUniqueness();
+	}
+
+	@RequestMapping(value = "/record/{part1}/{part2}", method = RequestMethod.GET,
+		produces = MediaType.APPLICATION_JSON_VALUE)
+	public String getRecord(
+			  @PathVariable("part1") String part1,
+			  @PathVariable("part2") String part2
+	)
+			  throws URISyntaxException, IOException {
+		String recordId = String.format(RECORDID_TPL, part1, part2);
+		return getRecordAsJson(recordId);
 	}
 
 	@RequestMapping(value = "/{part1}/{part2}.csv", method = RequestMethod.GET,
