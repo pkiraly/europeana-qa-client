@@ -52,6 +52,12 @@
 			<version>1.2.0</version>
 		</dependency>
 		<dependency>
+			<groupId>org.mongodb.morphia</groupId>
+			<artifactId>morphia-logging-slf4j</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+		<!--
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.21</version>
@@ -61,6 +67,7 @@
 			<artifactId>jul-to-slf4j</artifactId>
 			<version>1.7.21</version>
 		</dependency>
+		-->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
