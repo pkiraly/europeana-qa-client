@@ -108,9 +108,9 @@ public class QAController {
 	private String getRecordAsJson(String recordId) {
 		Bson condition = Filters.eq("about", recordId);
 		Document record = mongoDb.getCollection("record").find(condition).first();
-		// logger.info("record: " + record.toJson(codec));
 		transformer.transform(record);
 		String json = record.toJson(codec);
+		// logger.info("record: " + json);
 		return json;
 	}
 

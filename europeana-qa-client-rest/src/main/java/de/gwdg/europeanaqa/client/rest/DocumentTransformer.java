@@ -266,6 +266,9 @@ public class DocumentTransformer {
 			doc.remove("_id");
 			doc.remove("className");
 			transformLanguageStructure(doc);
+			if (collection.equals("PhysicalThing")) {
+				doc.put("europeanaProxy", Arrays.asList(((Boolean)doc.get("europeanaProxy")).toString()));
+			}
 			replaceKeys(doc);
 			for (String key : subEntities.keySet()) {
 				if (doc.containsKey(key)) {
