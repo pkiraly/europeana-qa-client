@@ -13,12 +13,17 @@ import java.util.Map;
 @JsonInclude(Include.NON_NULL)
 public class Result {
 
+	private String sessionId;
+	private String status;
+	private String result;
+
 	private List<String> existingFields;
 	private List<String> missingFields;
 	private List<String> emptyFields;
 	private Map<String, Object> results;
 	private Map<String, Map<String, ? extends Object>> labelledResults;
 	private Map<String, List<TfIdf>> termsCollection;
+	private String message;
 
 	public Result() {
 	}
@@ -69,5 +74,37 @@ public class Result {
 
 	public void setLabelledResults(Map<String, Map<String, ? extends Object>> labelledResults) {
 		this.labelledResults = labelledResults;
+	}
+
+	public String getSessionId() {
+		return sessionId;
+	}
+
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getResult() {
+		return result;
+	}
+
+	public void setResult(String result) {
+		this.result = result;
+	}
+
+	public String getMessage() {
+		return message;
+	}
+
+	public void setMessage(String message) {
+		this.message = message;
 	}
 }

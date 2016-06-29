@@ -4,6 +4,8 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import de.gwdg.europeanaqa.api.calculator.EdmCalculatorFacade;
 import de.gwdg.europeanaqa.client.rest.DocumentTransformer;
+import de.gwdg.europeanaqa.client.rest.controller.QAController;
+import java.util.logging.Logger;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -30,6 +32,8 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @ComponentScan(basePackages = "de.gwdg.europeanaqa.client.rest")
 public class ApplicationConfiguration {
 
+	Logger logger = Logger.getLogger(ApplicationConfiguration.class.getCanonicalName());
+
 	@Value("${mongo.host:localhost}")
 	String mongoHost;
 
@@ -51,8 +55,12 @@ public class ApplicationConfiguration {
 	@Value("${run.uniqueness:false}")
 	Boolean runUniqueness;
 
-	// @Value("${solr.db}")
-	// String solr;
+	@Value("${output.directory}")
+	String outputDirectory;
+
+	@Value("${r.directory:~/git/europeana-qa-r}")
+	String rDirectory;
+
 	MongoDatabase mongoDb;
 
 	@Bean
@@ -70,6 +78,19 @@ public class ApplicationConfiguration {
 		return mongoDb;
 	}
 
+	@Bean
+	SessionManager getSessionManager() {
+		SessionManager sessionManager = new SessionManager();
+		return sessionManager;
+	}
+
+	@Bean
+	FileManager getFileManager() {
+		logger.info("outputDirectory: " + outputDirectory);
+		FileManager fileManager = new FileManager(outputDirectory);
+		return fileManager;
+	}
+
 	/*
 	@Bean
 	MongoMappingDao getMongoMappingDao() {
@@ -79,8 +100,23 @@ public class ApplicationConfiguration {
 		return new MongoMappingDao(morphia, client, mongoDatabase);
 	}
 	 */
-	@Bean
-	EdmCalculatorFacade getCalculatorFacade() {
+	@Bean(name = "csvCalculator")
+	EdmCalculatorFacade getCalculatorFacadeForCsv() {
+		EdmCalculatorFacade calculator = new EdmCalculatorFacade();
+		calculator.runFieldCardinality(false);
+		calculator.runProblemCatalog(true);
+		calculator.runLanguage(false);
+		calculator.completenessCollectFields(false);
+		if (runUniqueness)
+			calculator.runTfIdf(true);
+		calculator.configure();
+		if (runUniqueness)
+			calculator.configureSolr(solrHost, solrHost, solrPath);
+		return calculator;
+	}
+
+	@Bean(name = "jsonCalculator")
+	EdmCalculatorFacade getCalculatorFacadeForJson() {
 		EdmCalculatorFacade calculator = new EdmCalculatorFacade();
 		calculator.runFieldCardinality(true);
 		calculator.runProblemCatalog(true);
@@ -89,7 +125,8 @@ public class ApplicationConfiguration {
 		if (runUniqueness)
 			calculator.runTfIdf(true);
 		calculator.configure();
-		calculator.configureSolr(solrHost, solrHost, solrPath);
+		if (runUniqueness)
+			calculator.configureSolr(solrHost, solrHost, solrPath);
 		return calculator;
 	}
 
@@ -124,4 +161,22 @@ public class ApplicationConfiguration {
 	public Boolean getRunUniqueness() {
 		return runUniqueness;
 	}
+
+	public String getOutputDirectory() {
+		return outputDirectory;
+	}
+
+	public void setOutputDirectory(String outputDirectory) {
+		this.outputDirectory = outputDirectory;
+	}
+
+	public String getrDirectory() {
+		return rDirectory;
+	}
+
+	public void setrDirectory(String rDirectory) {
+		this.rDirectory = rDirectory;
+	}
+	
+	
 }
