@@ -9,14 +9,19 @@ import de.gwdg.europeanaqa.client.rest.config.FileManager;
 import de.gwdg.europeanaqa.client.rest.config.SessionDAO;
 import de.gwdg.europeanaqa.client.rest.config.SessionManager;
 import de.gwdg.europeanaqa.client.rest.model.Result;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
@@ -268,6 +273,9 @@ public class QAController {
 					zipImageFiles(sessionId, zipStream);
 					zipJsonFiles(sessionId, zipStream);
 					zipStream.close();
+				} else {
+					logger.severe("errors: " + read(process.getErrorStream()));
+					logger.severe("output: " + process.getOutputStream().toString());
 				}
 			}
 		}
@@ -323,6 +331,12 @@ public class QAController {
 		String json = record.toJson(codec);
 		// logger.info("record: " + json);
 		return json;
+	}
+
+	private static String read(InputStream input) throws IOException {
+		try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input))) {
+			return buffer.lines().collect(Collectors.joining("\n"));
+		}
 	}
 
 }
