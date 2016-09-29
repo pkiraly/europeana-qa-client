@@ -1,5 +1,5 @@
 CWD=`pwd`
-cd ~/git/metadataqa-api/
+cd ~/git/metadata-qa-api/
 mvn clean install
 cd ~/git/europeana-qa-api/
 mvn clean install

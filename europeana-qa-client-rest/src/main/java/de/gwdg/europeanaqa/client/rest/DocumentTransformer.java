@@ -10,13 +10,13 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bson.Document;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.json.JsonWriterSettings;
 
 /**
  *
@@ -24,7 +24,7 @@ import org.bson.json.JsonWriterSettings;
  */
 public class DocumentTransformer {
 
-	Logger logger = Logger.getLogger(DocumentTransformer.class.getCanonicalName());
+	static final Logger logger = Logger.getLogger(DocumentTransformer.class.getCanonicalName());
 
 	DocumentCodec codec;
 	MongoDatabase mongoDb;
@@ -226,6 +226,10 @@ public class DocumentTransformer {
 	}
 
 	public void transform(Document record) {
+		transform(record, true);
+	}
+
+	public void transform(Document record, boolean withFieldRename) {
 		record.remove("_id");
 		record.remove("className");
 		record.put("identifier", record.get("about"));
@@ -239,43 +243,52 @@ public class DocumentTransformer {
 					if (refs != null && refs.size() > 0) {
 						List<Document> transformedValues = new ArrayList<>();
 						for (DBRef ref : refs) {
-							Document doc = resolveReference(ref);
+							Document doc = resolveReference(ref, withFieldRename);
 							transformedValues.add(doc);
 						}
-						record.remove(entity);
-						record.put(entities.get(entity), transformedValues);
+						if (withFieldRename) {
+							record.remove(entity);
+							record.put(entities.get(entity), transformedValues);
+						} else {
+							record.put(entity, transformedValues);
+						}
 					} else {
-						System.err.println("EMPTY: " + entity + " " + refs);
+						// System.err.println("EMPTY: " + entity + " " + refs);
 						record.remove(entity);
 					}
 				} else if (value instanceof DBRef) {
-					record.remove(entity);
-					record.put(entities.get(entity), resolveReference((DBRef) value));
+					if (withFieldRename) {
+						record.remove(entity);
+						record.put(entities.get(entity), resolveReference((DBRef) value, withFieldRename));
+					} else {
+						record.put(entity, resolveReference((DBRef) value, withFieldRename));
+					}
 				} else {
-					System.err.println("UNKNOWN: " + entity + " " + value.getClass().getCanonicalName());
+					logger.log(Level.SEVERE, "UNKNOWN: {0} {1}", new Object[]{entity, value.getClass().getCanonicalName()});
 				}
 			}
 		}
 
 	}
 
-	private Document resolveReference(DBRef ref) {
+	private Document resolveReference(DBRef ref, boolean withFieldRename) {
 		String collection = ref.getCollectionName();
 		Document doc = mongoDb.getCollection(collection).find(Filters.eq("_id", ref.getId())).first();
 		if (doc != null) {
 			doc.remove("_id");
 			doc.remove("className");
 			transformLanguageStructure(doc);
-			if (collection.equals("PhysicalThing")) {
+			if (collection.equals("PhysicalThing") && withFieldRename) {
 				doc.put("europeanaProxy", Arrays.asList(((Boolean)doc.get("europeanaProxy")).toString()));
 			}
-			replaceKeys(doc);
+			if (withFieldRename)
+				replaceKeys(doc);
 			for (String key : subEntities.keySet()) {
 				if (doc.containsKey(key)) {
 					List<Document> subDocs = new ArrayList<Document>();
 					List<DBRef> subRefs = (List<DBRef>) doc.get(key);
 					for (DBRef subRef : subRefs) {
-						subDocs.add(resolveReference(subRef));
+						subDocs.add(resolveReference(subRef, withFieldRename));
 					}
 					doc.remove(key);
 					doc.put(subEntities.get(key), subDocs);

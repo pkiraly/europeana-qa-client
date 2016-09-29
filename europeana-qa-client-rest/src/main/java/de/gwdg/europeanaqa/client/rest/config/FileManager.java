@@ -1,6 +1,5 @@
 package de.gwdg.europeanaqa.client.rest.config;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -15,8 +14,8 @@ import java.nio.file.StandardOpenOption;
  */
 public class FileManager {
 
-	private Charset charset = StandardCharsets.UTF_8;
-	private String directory;
+	private final Charset charset = StandardCharsets.UTF_8;
+	private final String directory;
 
 	public FileManager(String directory) {
 		this.directory = directory;

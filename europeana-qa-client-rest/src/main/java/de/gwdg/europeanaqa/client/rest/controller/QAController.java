@@ -16,10 +16,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -46,13 +46,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class QAController {
 
-	Logger logger = Logger.getLogger(QAController.class.getCanonicalName());
+	static final Logger logger = Logger.getLogger(QAController.class.getCanonicalName());
 
 	private static final int BUFFER_SIZE = 4096;
 	private final static String RECORDID_TPL = "/%s/%s";
 	private File rDir; // = new File("/home/kiru/git/europeana-qa-r");
 	private final static String R_SCRIPT = "get-histograms-and-stats.R";
-	private final static List<String> jsonSuffixes = Arrays.asList("", ".collector", ".count", ".freq", ".hist");
+	private final static List<String> JSON_SUFFIXES = Arrays.asList(
+		"", ".collector", ".count", ".freq", ".hist", "frequencyTable"
+	);
 
 	@Autowired
 	ApplicationConfiguration config;
@@ -90,26 +92,31 @@ public class QAController {
 		// return config.getMongoDb() + ", " + config.getRunUniqueness();
 	}
 
-	@RequestMapping(value = "/record/{part1}/{part2}", method = RequestMethod.GET,
-			  produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-	public String getRecord(
-			  @PathVariable("part1") String part1,
-			  @PathVariable("part2") String part2,
-			  @RequestParam(value = "sessionId", required = false) String sessionId
+	@RequestMapping(
+		value = "/record/{part1}/{part2}",
+		method = RequestMethod.GET,
+		produces = MediaType.APPLICATION_JSON_UTF8_VALUE
 	)
-			  throws URISyntaxException, IOException {
+	public String getRecord(
+			@PathVariable("part1") String part1,
+			@PathVariable("part2") String part2,
+			@RequestParam(value = "sessionId", required = false) String sessionId
+	)
+			throws URISyntaxException, IOException {
 		String recordId = String.format(RECORDID_TPL, part1, part2);
 		return getRecordAsJson(recordId);
 	}
 
-	@RequestMapping(value = "/batch/{part1}/{part2}", method = RequestMethod.GET,
-			  produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@RequestMapping(
+			value = "/batch/{part1}/{part2}",
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public @ResponseBody Result getBatchCsv(
-			  @PathVariable("part1") String part1,
-			  @PathVariable("part2") String part2,
-			  @RequestParam(value = "sessionId", required = false) String sessionId
+			@PathVariable("part1") String part1,
+			@PathVariable("part2") String part2,
+			@RequestParam(value = "sessionId", required = false) String sessionId
 	)
-			  throws URISyntaxException, IOException {
+			throws URISyntaxException, IOException {
 		Result result;
 		if (sessionId == null) {
 			result = buildResult(sessionId, "failure", "Missing sessionId.");
@@ -132,26 +139,30 @@ public class QAController {
 		return result;
 	}
 
-	@RequestMapping(value = "/{part1}/{part2}.csv", method = RequestMethod.GET,
-			  produces = "text/csv")
+	@RequestMapping(
+			value = "/{part1}/{part2}.csv",
+			method = RequestMethod.GET,
+			produces = "text/csv")
 	public String getCsv(
-			  @PathVariable("part1") String part1,
-			  @PathVariable("part2") String part2
+			@PathVariable("part1") String part1,
+			@PathVariable("part2") String part2
 	)
-			  throws URISyntaxException, IOException {
+			throws URISyntaxException, IOException {
 		String recordId = String.format(RECORDID_TPL, part1, part2);
 		String json = getRecordAsJson(recordId);
 		String csv = csvCalculator.measure(json);
 		return csv;
 	}
 
-	@RequestMapping(value = "/{part1}/{part2}.json", method = RequestMethod.GET,
-			  produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+	@RequestMapping(
+			value = "/{part1}/{part2}.json", 
+			method = RequestMethod.GET,
+			produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 	public @ResponseBody
 	Result getJson(
-			  @PathVariable("part1") String part1,
-			  @PathVariable("part2") String part2,
-			  @RequestParam(value = "sessionId", required = false) String sessionId
+			@PathVariable("part1") String part1,
+			@PathVariable("part2") String part2,
+			@RequestParam(value = "sessionId", required = false) String sessionId
 	) throws URISyntaxException, IOException {
 		String recordId = String.format(RECORDID_TPL, part1, part2);
 		String json = getRecordAsJson(recordId);
@@ -172,7 +183,9 @@ public class QAController {
 		return result;
 	}
 
-	@RequestMapping(value = "/batch/measuring/start", method = RequestMethod.GET)
+	@RequestMapping(
+			value = "/batch/measuring/start", 
+			method = RequestMethod.GET)
 	public @ResponseBody Result startMeasuring() throws URISyntaxException, IOException {
 		String sessionId = sessionManager.create();
 		return buildResult(sessionId, "success");
@@ -192,9 +205,11 @@ public class QAController {
 		return result;
 	}
 
-	@RequestMapping(value = "/batch/measuring/{sessionId}/stop", method = RequestMethod.GET)
+	@RequestMapping(
+			value = "/batch/measuring/{sessionId}/stop", 
+			method = RequestMethod.GET)
 	public @ResponseBody Result stopMeasuring(
-			  @PathVariable("sessionId") String sessionId
+			@PathVariable("sessionId") String sessionId
 	) throws URISyntaxException, IOException {
 		Result result;
 		if (sessionId == null || !sessionManager.validate(sessionId)) {
@@ -206,9 +221,11 @@ public class QAController {
 		return result;
 	}
 
-	@RequestMapping(value = "/batch/analyzing/{sessionId}/start", method = RequestMethod.GET)
+	@RequestMapping(
+			value = "/batch/analyzing/{sessionId}/start",
+			method = RequestMethod.GET)
 	public @ResponseBody Result startAnalzying(
-			  @PathVariable("sessionId") String sessionId
+			@PathVariable("sessionId") String sessionId
 	) throws URISyntaxException, IOException {
 		Result result;
 		if (sessionId == null || !sessionManager.validate(sessionId)) {
@@ -220,11 +237,11 @@ public class QAController {
 				if (rDir == null)
 					rDir = new File(config.getrDirectory());
 
-				logger.info("rDir: " + rDir.getAbsolutePath());
+				logger.log(Level.INFO, "rDir: {0}", rDir.getAbsolutePath());
 				String inputFile = fileManager.getPath(sessionId);
 				String command = String.format("Rscript %s %s true true true", R_SCRIPT, inputFile);
 			// String command = String.format("cd \"%s\"", rDir);
-				logger.info("Launching command: " + command);
+				logger.log(Level.INFO, "Launching command: {0}", command);
 				Process process = Runtime.getRuntime().exec(command, null, rDir);
 				sessionManager.setState(sessionId, SessionDAO.State.ANALYZING);
 				sessionManager.setAnalyzingProcess(sessionId, process);
@@ -264,18 +281,18 @@ public class QAController {
 		if (sessionManager.getState(sessionId).equals(SessionDAO.State.ANALYZING)) {
 			Process process = sessionManager.getAnalyzingProcess(sessionId);
 			if (!process.isAlive()) {
-				logger.info("process returned with exit value: " + process.exitValue());
+				logger.log(Level.INFO, "process returned with exit value: {0}", process.exitValue());
 				if (process.exitValue() == 0) {
 					response.setContentType("application/zip");
 					response.setHeader("Content-Disposition", "attachment; filename=analysis.zip");
 					logger.info("go on");
-					ZipOutputStream zipStream = new ZipOutputStream(response.getOutputStream());
-					zipImageFiles(sessionId, zipStream);
-					zipJsonFiles(sessionId, zipStream);
-					zipStream.close();
+					try (ZipOutputStream zipStream = new ZipOutputStream(response.getOutputStream())) {
+						zipImageFiles(sessionId, zipStream);
+						zipJsonFiles(sessionId, zipStream);
+					}
 				} else {
-					logger.severe("errors: " + read(process.getErrorStream()));
-					logger.severe("output: " + process.getOutputStream().toString());
+					logger.log(Level.SEVERE, "errors: {0}", read(process.getErrorStream()));
+					logger.log(Level.SEVERE, "output: {0}", process.getOutputStream().toString());
 				}
 			}
 		}
@@ -297,14 +314,13 @@ public class QAController {
 	private void zipJsonFiles(String sessionId, ZipOutputStream zipStream) throws IOException {
 		File jsonDir = new File(rDir, "json");
 		if (jsonDir.exists()) {
-			for (String suffix : jsonSuffixes) {
+			for (String suffix : JSON_SUFFIXES) {
 				File file = new File(jsonDir, sessionId + suffix + ".json");
 				if (file.exists()) {
 					ZipEntry zipEntry = new ZipEntry(file.getName());
 					copyContent(file, zipStream, zipEntry);
 				} else {
-					logger.info("json file doesn't exist " + file.getAbsolutePath());
-					
+					logger.log(Level.INFO, "json file doesn''t exist {0}", file.getAbsolutePath());
 				}
 			}
 		} else {

@@ -4,7 +4,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import de.gwdg.europeanaqa.api.calculator.EdmCalculatorFacade;
 import de.gwdg.europeanaqa.client.rest.DocumentTransformer;
-import de.gwdg.europeanaqa.client.rest.controller.QAController;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.DocumentCodec;
@@ -32,7 +32,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @ComponentScan(basePackages = "de.gwdg.europeanaqa.client.rest")
 public class ApplicationConfiguration {
 
-	Logger logger = Logger.getLogger(ApplicationConfiguration.class.getCanonicalName());
+	static final Logger logger = Logger.getLogger(ApplicationConfiguration.class.getCanonicalName());
 
 	@Value("${mongo.host:localhost}")
 	String mongoHost;
@@ -86,7 +86,7 @@ public class ApplicationConfiguration {
 
 	@Bean
 	FileManager getFileManager() {
-		logger.info("outputDirectory: " + outputDirectory);
+		logger.log(Level.INFO, "outputDirectory: {0}", outputDirectory);
 		FileManager fileManager = new FileManager(outputDirectory);
 		return fileManager;
 	}
@@ -103,12 +103,12 @@ public class ApplicationConfiguration {
 	@Bean(name = "csvCalculator")
 	EdmCalculatorFacade getCalculatorFacadeForCsv() {
 		EdmCalculatorFacade calculator = new EdmCalculatorFacade();
-		calculator.runFieldCardinality(false);
-		calculator.runProblemCatalog(true);
-		calculator.runLanguage(false);
+		calculator.enableFieldCardinalityMeasurement(false);
+		calculator.enableProblemCatalogMeasurement(true);
+		calculator.enableLanguageMeasurement(false);
 		calculator.completenessCollectFields(false);
 		if (runUniqueness)
-			calculator.runTfIdf(true);
+			calculator.enableTfIdfMeasurement(true);
 		calculator.configure();
 		if (runUniqueness)
 			calculator.configureSolr(solrHost, solrHost, solrPath);
@@ -118,12 +118,12 @@ public class ApplicationConfiguration {
 	@Bean(name = "jsonCalculator")
 	EdmCalculatorFacade getCalculatorFacadeForJson() {
 		EdmCalculatorFacade calculator = new EdmCalculatorFacade();
-		calculator.runFieldCardinality(true);
-		calculator.runProblemCatalog(true);
-		calculator.runLanguage(true);
+		calculator.enableFieldCardinalityMeasurement(true);
+		calculator.enableProblemCatalogMeasurement(true);
+		calculator.enableLanguageMeasurement(true);
 		calculator.completenessCollectFields(true);
 		if (runUniqueness)
-			calculator.runTfIdf(true);
+			calculator.enableTfIdfMeasurement(true);
 		calculator.configure();
 		if (runUniqueness)
 			calculator.configureSolr(solrHost, solrHost, solrPath);
@@ -177,6 +177,4 @@ public class ApplicationConfiguration {
 	public void setrDirectory(String rDirectory) {
 		this.rDirectory = rDirectory;
 	}
-	
-	
 }

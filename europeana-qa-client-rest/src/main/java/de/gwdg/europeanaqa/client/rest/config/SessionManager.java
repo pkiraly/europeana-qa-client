@@ -1,8 +1,6 @@
 package de.gwdg.europeanaqa.client.rest.config;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -12,7 +10,7 @@ import java.util.UUID;
  */
 public class SessionManager {
 	
-	private Map<String, SessionDAO> sessionIds;
+	private final Map<String, SessionDAO> sessionIds;
 
 	public SessionManager() {
 		this.sessionIds = new HashMap<>();
