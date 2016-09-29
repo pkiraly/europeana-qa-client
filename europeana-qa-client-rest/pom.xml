@@ -4,10 +4,9 @@
 	<groupId>de.gwdg.metadataqa</groupId>
 	<artifactId>europeana-qa-client-rest</artifactId>
 	<packaging>war</packaging>
-	<version>1.0-SNAPSHOT</version>
+	<version>0.4-SNAPSHOT</version>
 	<name>Europeana Metadata QA Client REST</name>
 	<url>http://maven.apache.org</url>
-
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -44,12 +43,17 @@
 		<dependency>
 			<groupId>de.gwdg.metadataqa</groupId>
 			<artifactId>europeana-qa-api</artifactId>
-			<version>0.3-SNAPSHOT</version>
+			<version>0.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb.morphia</groupId>
 			<artifactId>morphia</artifactId>
 			<version>1.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.datastax.cassandra</groupId>
+			<artifactId>cassandra-driver-core</artifactId>
+			<version>2.1.9</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

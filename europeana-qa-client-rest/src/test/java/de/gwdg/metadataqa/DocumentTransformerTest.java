@@ -1,5 +1,9 @@
 package de.gwdg.metadataqa;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
 import com.jayway.jsonpath.InvalidJsonException;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
@@ -9,17 +13,19 @@ import de.gwdg.europeanaqa.client.rest.DocumentTransformer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import static junit.framework.TestCase.*;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import org.junit.After;
-import org.junit.AfterClass;
+import static org.junit.Assert.assertNotNull;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -28,9 +34,15 @@ import org.junit.Test;
  */
 public class DocumentTransformerTest {
 
+	private static final Logger logger = Logger.getLogger(DocumentTransformerTest.class.getCanonicalName());
+
 	DocumentCodec codec;
 	MongoDatabase mongoDb;
+	// private static Cluster cluster;
+	private static Session session;
+
 	EdmCalculatorFacade calculator;
+	EdmCalculatorFacade calculatorFullBean;
 	DocumentTransformer transformer;
 
 	List<String> exceptions = Arrays.asList("title", "type", "europeanaCompleteness",
@@ -43,14 +55,6 @@ public class DocumentTransformerTest {
 	public DocumentTransformerTest() {
 	}
 
-	@BeforeClass
-	public static void setUpClass() {
-	}
-
-	@AfterClass
-	public static void tearDownClass() {
-	}
-
 	@Before
 	public void setUp() {
 		CodecRegistry codecRegistry = CodecRegistries.fromRegistries(MongoClient.getDefaultCodecRegistry());
@@ -58,22 +62,29 @@ public class DocumentTransformerTest {
 
 		MongoClient mongoClient = new MongoClient("localhost", 27017);
 		mongoDb = mongoClient.getDatabase("europeana");
+		// cluster = Cluster.builder().addContactPoint("127.0.0.1").build();
+		// session = cluster.connect("europeana");
+
 
 		calculator = new EdmCalculatorFacade();
-		calculator.runFieldCardinality(true);
-		calculator.runProblemCatalog(true);
-		calculator.runLanguage(true);
+		calculator.enableFieldCardinalityMeasurement(true);
+		calculator.enableProblemCatalogMeasurement(true);
+		calculator.enableLanguageMeasurement(true);
 		calculator.completenessCollectFields(true);
 		calculator.configure();
+
+		calculatorFullBean = new EdmCalculatorFacade();
+		calculatorFullBean.enableFieldCardinalityMeasurement(true);
+		calculatorFullBean.enableProblemCatalogMeasurement(true);
+		calculatorFullBean.enableLanguageMeasurement(true);
+		calculatorFullBean.completenessCollectFields(true);
+		calculatorFullBean.setFormat(EdmCalculatorFacade.Formats.FULLBEAN);
+		calculatorFullBean.configure();
 
 		transformer = new DocumentTransformer(mongoDb);
 	}
 
-	@After
-	public void tearDown() {
-	}
-
-	@Test
+	// @Test
 	public void testEveryDatasets() {
 		List<String> ids = Arrays.asList(
 				  "/00101/E57D0044D5A95B061B67D9820F6D9C2FC2A789F2",
@@ -122,12 +133,10 @@ public class DocumentTransformerTest {
 				  "/03919/020E9E0D15052C9A0C7CCD7D1E97D28C52FEA831",
 				  "/03922/id_10373",
 				  "/04101/000C6B243610F18682D93ABF411E0EF24992BAAE",
-				  "/04202/BibliographicResource_2000068248273",
 				  "/04601/0BB238247E1DB33ACDDA6C09137687456E389E95",
 				  "/04602/32F3D48DF90DF55FDDD58C43BF5A838E9113C6D1",
 				  "/04802/05BDF1F28A3E74FE55936E429081B4D41FDA4BC0",
 				  "/05811/033977B5_9219_4084_AA48_75700F85163C",
-				  "/05812/0F79FC6D_FD75_49B1_A5BD_FF91380B1D33",
 				  "/06901/03FB7188661335E7CC4B8AFA4C7999F396B4C2A6",
 				  "/07101/G_113",
 				  "/07202/SGCM_Consultation_aspx_id_110075",
@@ -308,7 +317,6 @@ public class DocumentTransformerTest {
 				  "/09408/jetspeed_portal_browser_psml_docID_15965_secID_25742",
 				  "/09411/00AC9F00FEB57A01B4933C048DDE25C2FC6B7E29",
 				  "/09419/DE3F12DD3EFFB14E280856E81E4EFEC7A9860EAD",
-				  "/09424/1160_jpg_CTetrGdmehjydSmOMI1DMA_3D_3D",
 				  "/09425/museaalview_592733",
 				  "/09426/05CD62A7341BEE1A1DB69F68BDBF8BE35AD1C3FF",
 				  "/09428/Eversmanne_eversmanne_index_html",
@@ -375,21 +383,17 @@ public class DocumentTransformerTest {
 				  "/11101/001AF7F4B8A4B28ECD06CD14CD209298C7DD6112",
 				  "/11601/_HERBARW_NHMV_AUSTRIA_100004",
 				  "/11602/HERBARWU_WU_AUSTRIA_100157",
-				  "/11603/_ZOBODAT_LANDOOE_AUSTRIA_100000867",
 				  "/11604/_LUOMUS_BONSDORFF_UH_FINLAND_40045100",
 				  "/11608/NBGB_NBGB_BELGIUM_BR0000005014590",
-				  "/11610/_AEI_AGRO_ETI_NETHERLANDS_263",
 				  "/11612/DATAFLOS_IBSAS_SLOVAKIA_343015",
 				  "/11613/ANTHROPOLOGY_NM_CZECHREPUBLIC_P7A13805",
 				  "/11614/_ECBOT_RBGK_UK_1240",
 				  "/11615/_BWFLORADANICA_UCPH_DENMARK_CCCCLXIV_1",
-				  "/11616/_OPENUP_ACCESSIONS_RBGE_UK_19230010",
 				  "/11617/_BOTANICALCOLLECTION_UTNHM_ESTONIA_TU150611",
 				  "/11618/_COLEOPTERA_ZFMK_GERMANY_COL_2006_1",
 				  "/11619/BOTANYARTWORK_NBCNL_NETHERLANDS_L0547851_753",
 				  "/11620/MNHNBOTANY_MNHN_FRANCE_P00040618",
 				  "/11621/_NHM_LIVE_NHM_UK_100010",
-				  "/11622/_GLOBIS_MFN_GERMANY_10003",
 				  "/11623/_AFROMOTHS_MRAC_BELGIUM_1009",
 				  "/11624/GEOCASEGIT_GIT_ESTONIA_100_3",
 				  "/11625/RBINSOPENUP_RBINS_BELGIUM_1181",
@@ -425,14 +429,12 @@ public class DocumentTransformerTest {
 				  "/2020104/txt_AnaSMG1984_Delo",
 				  "/2020105/img_500da777550db",
 				  "/2020106/00E5CE700155ADC394E2180838C19FCE72A57622",
-				  "/2020108/File_100408nm003_jpg",
 				  "/2020109/details_URN_NBN_SI_DOC_0G1RTETB",
 				  "/2020111/predmet_img_4ffe8e12edec5",
 				  "/2020112/media_059fb19969_5837sv_mg883_s_pregelj_dia6_tif_thumbsize_s",
 				  "/2020114/URN_NBN_SI_DOC_0EUTITQ5",
 				  "/2020115/URN_NBN_SI_doc_051CYJ40",
 				  "/2020124/URN_NBN_SI_DOC_008989TR",
-				  "/2020201/035D628EB91DA54A119A2BB7F49C0B90B9172F99",
 				  "/2020601/attachments_1001_332_1001_original_1001_jpg",
 				  "/2020701/DR_2012_09_6_13_36_24",
 				  "/2020702/0F1F1DA4034E682443D5BC3BFA2B4FB57A9BA556",
@@ -441,7 +443,6 @@ public class DocumentTransformerTest {
 				  "/2020705/DR_1010",
 				  "/2020706/HA100004",
 				  "/2020707/0233F2BEAAEC31E7FA892EF91685F56876D2236B",
-				  "/2020708/uid_iid_2488807_DR_22_pdf_1",
 				  "/2020709/HA_oai_nid_pl_1_159",
 				  "/2020710/object_DANS_7413753",
 				  "/2020711/DR_10197",
@@ -452,7 +453,6 @@ public class DocumentTransformerTest {
 				  "/2020717/DR_0707",
 				  "/2020718/DR_10101",
 				  "/2020720/DR_00092ac8c72c77849e0ea4b8bd07d36d",
-				  "/2020721/HA_DMS01_100",
 				  "/2020722/DR_10003",
 				  "/2020723/HA_http___www_kulturarv_dk_fbb_building_10053141",
 				  "/2020724/HA_http___www_kulturarv_dk_fundogfortidsminder_site_1",
@@ -491,19 +491,14 @@ public class DocumentTransformerTest {
 				  "/2021301/B5BAA9BB45726238F83EBEA664B330CE4F7A2380",
 				  "/2021501/MILPES_07",
 				  "/2021502/jspui_handle_pub_100",
-				  "/2021601/media_127751",
 				  "/2021602/9F53932C8241F5FB1E78F86C55B407E53ED73091",
 				  "/2021603/teylers_col28_dat10000_TEY0010004226",
-				  "/2021604/CE2FF2207502BB0E18E0D6C250C558694E8441C8",
-				  "/2021605/03650D445BDB0785A0E7A2CCFFE42082D4E791DE",
 				  "/2021606/collectie_zoeken_object_AB_20147",
-				  "/2021608/dispatcher_aspx_action_search_database_ChoiceCollect_search_priref_10001",
 				  "/2021609/objecten_10",
 				  "/2021612/collectie_fotos_detail_id_0025e8a8_3414_0a17_2934_4c2a11bd5c6a",
 				  "/2021613/tracks_101034325",
 				  "/2021614/AtlantisPubliek_detail_aspx_xmldescid_1000663",
 				  "/2021615/nl_item_uri_http___www_rnaproject_org_data_4e8b2e51_7b20_499d_a11e_ded87930d26e",
-				  "/2021616/nl_item_uri_http___www_rnaproject_org_data_000d0f04_1b60_47d7_bbca_e766ba6eb14e",
 				  "/2021617/nl_item_uri_http___www_rnaproject_org_data_02365c7e_7eb6_4206_945e_e8d06f573084",
 				  "/2021618/internetserver_Details_kunst_10092",
 				  "/2021619/C0946",
@@ -528,7 +523,6 @@ public class DocumentTransformerTest {
 				  "/2021639/1004",
 				  "/2021641/publiek_detail_aspx_xmldescid_119064139",
 				  "/2021642/Atlantispubliek_Default_aspx_detail_116668202",
-				  "/2021643/memorix_0009e54b_81e9_4656_ac59_325d8a8d00ea",
 				  "/2021644/https___historischcentrumleeuwarden_nl_beeldbank_017cbcdc_aeaa_11e3_8a79_bbfbf76a6868",
 				  "/2021645/detail_79c793ea_66f4_11e3_9a20_0fe89aa6baf4",
 				  "/2021646/HttpHandler_icoon_ico_file_1000643",
@@ -537,7 +531,6 @@ public class DocumentTransformerTest {
 				  "/2021649/AtlantisPubliek_detail_aspx_xmldescid_1030434",
 				  "/2021650/memorix_000063da_c2e2_add9_224c_7961c97e7fe3",
 				  "/2021651/ran__detail_aspx_xmldescid_100964",
-				  "/2021652/detail_php_id_11200749",
 				  "/2021653/detail_php_id_10487715",
 				  "/2021654/1962_II260",
 				  "/2021655/gemeentearchief_weblet_72818_afbeelding_ffffc0dc_73b8_11e4_a7d7_e73131fb7e9a",
@@ -550,7 +543,6 @@ public class DocumentTransformerTest {
 				  "/2021662/zoeken_en_vinden_beeldbank_weergave_record_layout_default_id_05a834ff_abd1_24c1_54ee_59d348b82a7d",
 				  "/2021663/memorix_00221886_fb8f_11df_9e4d_523bc2e286e2",
 				  "/2021664/search_identifier_tud_items_0750f62ded829ea3eb35ca55d8bace49",
-				  "/2021665/1960FD24553E401B949A3ECB94938AAE",
 				  "/2021666/F80A579D46955AE6E044001A4B08D326",
 				  "/2021701/10797_13434",
 				  "/2021703/0871FDC40421FE320B5B5500689BDF59C6660127",
@@ -575,7 +567,6 @@ public class DocumentTransformerTest {
 				  "/2021727/10797_6330",
 				  "/2021728/10797_10648",
 				  "/2021801/recordDescription_ARCH_1049_1_5",
-				  "/2021802/recordDescription_LDM_LDM1_1000013",
 				  "/2021803/recordDescription_KLAVB_C160000198289",
 				  "/2021901/PT1914_MEM_OBJ_544",
 				  "/2022001/10796_0185E0A8_3693_4358_862E_D2E20ACE0BB781",
@@ -755,8 +746,6 @@ public class DocumentTransformerTest {
 				  "/2022420/cjcpctcluj_MUP_101_mp3",
 				  "/2022425/ro_bjt_doc_DR_1894_198_2",
 				  "/2022602/NFMf_1984002_0001",
-				  "/2022603/00E32B57DB5B280326B0EA4F835981A8FD00E827",
-				  "/2022604/0240F559FAA47984A610A8C07456BC226BF49C89",
 				  "/2022606/Stad_178709",
 				  "/2022607/Stad_100101",
 				  "/2022608/AAK_AAKS_2007_02_0203",
@@ -818,12 +807,6 @@ public class DocumentTransformerTest {
 				  "/2023401/ead_html_id_FRAD033_IR_1MiEC_c_FRAD033_IR_1MiEC_FRAD033_IR_1MiEC_de_1144",
 				  "/2023402/FRAD033_BIB4L1417",
 				  "/2023403/005_lateste",
-				  "/2023504/02C2CE8AD716837A7A7F7CB379A7CAA98E7C93B1",
-				  "/2023505/003612DC5068CDAE22D2B3063B889F0FCBF97753",
-				  "/2023507/055ED7139DFF3B3FFEB26ED328A525D62EDE394C",
-				  "/2023508/01DECB4BBA2BEA9BBD344D294C6A9915ACCCFD29",
-				  "/2023509/0C408B252687B89CA4891179570D4A64F5F670C8",
-				  "/2023510/0554B11A6721E13D0F0426346CCA085F8E628202",
 				  "/2023601/oai_eu_dismarc_15BR_USBK41000005",
 				  "/2023701/ANS68c101ea6d1211e1ae16bc305bd461d9",
 				  "/2023702/014D4DEE1C5C0421F188FC1D85C17B8B96CE2E57",
@@ -996,12 +979,9 @@ public class DocumentTransformerTest {
 				  "/2048008/Athena_Plus_ProvidedCHO_Ajuntament_de_Girona_",
 				  "/2048009/Athena_Plus_ProvidedCHO_Museum_of_Fine_Arts___Hungarian_National_Gallery__Budapest_1379",
 				  "/2048010/Athena_Plus_ProvidedCHO_Slovenski_etnografski_muzej_F0000009_004",
-				  "/2048011/00391987",
-				  "/2048012/Athena_Plus_ProvidedCHO_Openbaar_Kunstbezit_Vlaanderen_2006_3_7",
 				  "/2048013/Athena_Plus_ProvidedCHO_Maison_des_Sciences_de_l_Homme_Alpes___UPMF___CNRS_CH_TI_0037",
 				  "/2048014/Athena_Plus_ProvidedCHO_eSb_rky_NP_11_223",
 				  "/2048015/Athena_Plus_ProvidedCHO_Biblioteca_Academiei_Rom_ne_CN_4487",
-				  "/2048016/ArtsAtIndjov_0003",
 				  "/2048017/Athena_Plus_ProvidedCHO_Pictures_bank_eu__ICIMSS__11183",
 				  "/2048022/Athena_Plus_ProvidedCHO_Istituto_Sturzo__Roma_oai_sturzo_it_archiviopersonale_actadiurna_3100201",
 				  "/2048024/Athena_Plus_ProvidedCHO_Biblioteca_nazionale_centrale_di_Roma_oai_bncrm_librari_beniculturali_it_disco_BVE0233212_001",
@@ -1030,18 +1010,6 @@ public class DocumentTransformerTest {
 				  "/2048049/Athena_Plus_ProvidedCHO_Eesti_Rahvusringh__ling_10224",
 				  "/2048051/Athena_Plus_ProvidedCHO_Prirodoslovni_muzej_Slovenije__Slovenian_Museum_of_Natural_History__PMSL_PZFN_Media_00216",
 				  "/2048053/MUO_004169_13",
-				  "/2048055/MUO_002424",
-				  "/2048056/MUO_016281",
-				  "/2048057/MUO_008450",
-				  "/2048060/MUO_005277",
-				  "/2048061/MUO_002285",
-				  "/2048062/MUO_006493",
-				  "/2048065/MUO_005368",
-				  "/2048067/MUO_006809",
-				  "/2048068/MUO_005454",
-				  "/2048069/MUO_011078_1",
-				  "/2048071/MUO_004026",
-				  "/2048074/MUO_001763",
 				  "/2048075/1384_III",
 				  "/2048076/Athena_Plus_ProvidedCHO_Ben_Uri_Gallery_and_Museum__London_1987_28",
 				  "/2048077/Athena_Plus_ProvidedCHO_Bildarchiv_Foto_Marburg_obj_00002014_834_808",
@@ -1103,7 +1071,6 @@ public class DocumentTransformerTest {
 				  "/2048227/A_1_002",
 				  "/2048228/foto_100",
 				  "/2048301/providedCHO_0000",
-				  "/2048302/providedCHO_0000",
 				  "/2048303/providedCHO_10654",
 				  "/2048304/providedCHO_EAA_1",
 				  "/2048306/providedCHO_1658_d1e10084",
@@ -1117,7 +1084,6 @@ public class DocumentTransformerTest {
 				  "/2048314/providedCHO_SLA_OU_1381_III_24",
 				  "/2048315/providedCHO_AT_KLA_418_B_A_1008_St",
 				  "/2048316/providedCHO_TLA_11",
-				  "/2048319/providedCHO_1_01_02_1_01_02___12584_330",
 				  "/2048320/providedCHO_4_DEF___1_11",
 				  "/2048323/providedCHO_SE_GLA_10774_C_IV_41",
 				  "/2048324/providedCHO_SE_HLA_1010004_L_I_1",
@@ -1162,7 +1128,6 @@ public class DocumentTransformerTest {
 				  "/2048612/data_item_cjh_lbiarchive_oai_digital_cjh_org_1019851",
 				  "/2048613/data_item_cjh_yivoarchive_oai_digital_cjh_org_111599",
 				  "/2048614/data_item_brandeis_scwp_10192_25572",
-				  "/2048615/data_item_pim_kassak_o_atett_1_tei_10",
 				  "/2048616/data_item_bas_codsupra_0",
 				  "/2048617/data_item_jdc_nyar1418_d1e9502a1310_68",
 				  "/2048618/data_item_ub_ffm_horkheimer_Na_1_1",
@@ -1230,24 +1195,18 @@ public class DocumentTransformerTest {
 				  "/2058207/10970_objects_H498626",
 				  "/2058401/_providedCHO_0000e8d0_1e96_fd98_a810_97b15f765d8a",
 				  "/2058501/MTB_AW_1935_18",
-				  "/2058601/object_CUT_13216304",
 				  "/2058602/object_Zavad_Jara_5280824",
 				  "/2058603/cont_Digital_aspx_id_RCG_000110_FJLCGJNZKMMICBMMJWDK",
 				  "/2058604/10002",
-				  "/2058605/object_NPU_5781030",
 				  "/2058606/bw5ne5_ThumbJpeg_ashx_WEBIDS_FNBN5904_Pixels_0",
 				  "/2058607/cdm_ref_collection_AEFA_id_10",
-				  "/2058608/stone_php_lang_en_site_National_Museum_stoneinfo_description_stone_216__Whitefield_II",
 				  "/2058609/object_PSRL_5411435",
 				  "/2058610/bib_BVPB20140020386",
-				  "/2058611/000392df_ab79_422e_ad26_771de93c5f54",
 				  "/2058612/object_CHB_00017fdb9b4cdc0358fcf6cc68f47558a36a834c",
-				  "/2058613/KMB_0046",
 				  "/2058614/SE_KAPY_ANGE_LJV280",
 				  "/2058615/554",
 				  "/2058616/_docId_102",
 				  "/2058617/https___svevid_locloudhosting_net_files_original_42a6e47dc74644fcd079d593526ddf2d_pdf",
-				  "/2058618/object__Kulturstyrelsen_7432987",
 				  "/2058701/File_Direkt_C3_B6rensens_villa_Tr_C3_A4dg_C3_A5rdsf_C3_B6reningen_jpg",
 				  "/2058702/File_Bruksvallarna_jpg",
 				  "/2058703/File_B_C3_A5tmanstorpet1_JPG",
@@ -1267,8 +1226,6 @@ public class DocumentTransformerTest {
 				  "/2059101/MP_E00003",
 				  "/2059201/data_sounds_50980",
 				  "/2059202/AAGO_884385557768_1",
-				  "/2059205/data_sounds_hdl_1839_00_0000_0000_0009_2CF1_3",
-				  "/2059206/data_sounds_http___epth_sfm_gr_card_aspx_mid_1971",
 				  "/2059207/data_sounds_ADC_41",
 				  "/2059208/archives_items_37672_",
 				  "/2059209/Classical_music_Oral_history_of_Glyndebourne_opera_026M_C0511X0002XX_0005V0",
@@ -1382,7 +1339,6 @@ public class DocumentTransformerTest {
 				  "/91913/01A1D98FFF62AB36BD17E8333EC99236D294A212",
 				  "/91914/00C16E2FC57FAA24264B4679704F6E49DC2DBE59",
 				  "/91915/019326BFDD66AA5A418A8A7AB2E30AA9E9134FF2",
-				  "/91916/0177510DD9FA5B60AB614BDFE240292531F518A0",
 				  "/91917/cgi_bin_thumbnail_exe_CISOROOT__arxiurs_CISOPTR_106",
 				  "/91918/u__premsapolc_10018",
 				  "/91919/u__pavellorepu_1006",
@@ -1416,9 +1372,7 @@ public class DocumentTransformerTest {
 				  "/91948/0462DD6AD8B636DBD7B3CC125720C08C82355C64",
 				  "/91949/118B1430D6A30E171538D68BB6EB9DCFEE2C7501",
 				  "/91950/01DB505C0B6C214BF88F270CAA68B357A85FA63E",
-				  "/91951/0080D9365CD9DCCDE194B70A11B490713F7D7A50",
 				  "/91952/019CA5C7BCC0BAD4A6E4C27A66997C7B58DBA83F",
-				  "/91954/00344720737AC803FF9ADCA0ECF70729077F89C8",
 				  "/91955/06A29A3FA664539278887720982FEB6B8FAE9380",
 				  "/91956/u__fulletsAB_15067",
 				  "/91957/001CF7B49F6A83032F557C6E911EDE8C3788CF2D",
@@ -1431,7 +1385,6 @@ public class DocumentTransformerTest {
 				  "/91965/001FD516815828B7BC36E4BD34F7E88E8CEC3BAB",
 				  "/91966/050153C1E415B7C953BF1E2B60FA3082C9941795",
 				  "/91967/026647A2A3B0FFE3775F4B9EC7F50A8AAEB44BCA",
-				  "/91968/AB0164C7D3C14C72E2B39AC55A57BD9726573012",
 				  "/91969/0048CF02D4D4380595A0F942B66D6EDC770B8765",
 				  "/91970/02267B1ED9211CC534356CBF05DE9EAC35749D27",
 				  "/91971/0135EB6211592AB620570F96F01FA1E2D7AF1166",
@@ -1440,11 +1393,8 @@ public class DocumentTransformerTest {
 				  "/91974/00B8F5925C8AF9A87E2BDFAB3145983DC502B3B1",
 				  "/91975/011C4D59A913DFA5FFBFC46B0F14F8AA3545CF9A",
 				  "/91977/01492DDDE696F9D8FA5C21E5C8FD232CE92A5655",
-				  "/91978/5B0130564E3768C6BD70E7DDADBDBA2A7707040E",
 				  "/91979/FD0BFBF379FAD776401FA97BC9D622E1223E234F",
-				  "/91980/03D19829CEB1FEE9B03D300CC7A5F536421448E6",
 				  "/91981/06ABBAB4BA08FB6C72C9EAF57FFE7A33E787DA19",
-				  "/91982/25861D2CE8ADC9054A11CCB18AC443EE6E954C0C",
 				  "/91983/0106078B23383F7CBB183BE616DA71BB209BEE4C",
 				  "/91984/00CD3A39DE0841F11CE74315B6C83E46BC3C6E31",
 				  "/91985/05D81DF2443E102D05640040357956D7E0BF4295",
@@ -1452,7 +1402,6 @@ public class DocumentTransformerTest {
 				  "/91987/02493E502E01001FAFA7A5D8C14AB7F0CA7D65C7",
 				  "/91988/B1E942D120216101B7ACACBC74E6FA640D76C8B2",
 				  "/91989/033DD96546DF0E744005DFF1F07CB56D8D383D1B",
-				  "/91991/076E7FADFE8F02CEF3F7FDA2563052D1A63A78AC",
 				  "/91992/00EA945CE38157EA0222B938C743FC41F4338DFA",
 				  "/91993/04F0BCC1951D5BAEAF6B7A83B8B19E6E61F9209F",
 				  "/91994/00F1ED6C206E525B07FD2FC2F70B87FE6841AFFF",
@@ -1494,8 +1443,6 @@ public class DocumentTransformerTest {
 				  "/9200138/BibliographicResource_3000135561135",
 				  "/9200139/BibliographicResource_3000135561433",
 				  "/9200140/BibliographicResource_2000069520012",
-				  "/9200141/BibliographicResource_2000068209586",
-				  "/9200142/BibliographicResource_2000068209580",
 				  "/9200143/BibliographicResource_2000069285151",
 				  "/9200144/BibliographicResource_2000068837037",
 				  "/9200145/01E1FC0EC3E02FB184862D61C67C1DC12AC20014",
@@ -1563,7 +1510,6 @@ public class DocumentTransformerTest {
 				  "/9200226/001856655",
 				  "/9200227/BibliographicResource_3000073974040",
 				  "/9200228/BibliographicResource_3000073857513_source",
-				  "/9200229/BibliographicResource_2000068209651",
 				  "/9200231/BibliographicResource_2000092034262",
 				  "/9200232/BibliographicResource_3000004737604",
 				  "/9200233/BibliographicResource_3000100028445",
@@ -1629,7 +1575,6 @@ public class DocumentTransformerTest {
 				  "/9200299/BibliographicResource_3000073872746_source",
 				  "/92002/BibliographicResource_1000093325555_source",
 				  "/9200300/BibliographicResource_3000051778517",
-				  "/9200301/BibliographicResource_3000118016110",
 				  "/9200302/BibliographicResource_2000092065005",
 				  "/9200303/BibliographicResource_3000059757920",
 				  "/9200304/BibliographicResource_3000073870802",
@@ -1690,7 +1635,6 @@ public class DocumentTransformerTest {
 				  "/9200366/BibliographicResource_3000112670456",
 				  "/9200367/BibliographicResource_3000113567732",
 				  "/9200368/BibliographicResource_3000113715355",
-				  "/9200369/BibliographicResource_3000113670034",
 				  "/9200370/BibliographicResource_3000095828180",
 				  "/9200371/BibliographicResource_3000113775004",
 				  "/9200373/BibliographicResource_3000115253166",
@@ -1799,7 +1743,6 @@ public class DocumentTransformerTest {
 				  "/92083/00C528BD52C3BCA86E5E29DDE240FB0A3DA04312",
 				  "/92084/0046246E0C50E52F57467CD305C80AC76A2C14FF",
 				  "/92085/BibliographicResource_1000126246198",
-				  "/92086/BibliographicResource_1000086165674",
 				  "/92087/BibliographicResource_3000095667652",
 				  "/92088/2B63ADBE5E01F9E48BD6D764499AF7D62115865F",
 				  "/92089/BibliographicResource_1000086013126",
@@ -1814,6 +1757,7 @@ public class DocumentTransformerTest {
 
 
 		for (String id : ids) {
+			// logger.info(String.format("Testing id %s", id));
 			Document record = getRecord(id);
 			if (record == null) {
 				continue;
@@ -1821,6 +1765,55 @@ public class DocumentTransformerTest {
 
 			testFieldNames(record, id);
 			testLanguages(record, id);
+
+			String json1 = record.toJson(codec);
+			// System.err.println("json1: " + json1);
+			Document record2 = getRecord(id, false);
+			String json2 = record2.toJson(codec);
+			// System.err.println("json2: " + json2);
+
+			String csv1 = calculator.measure(json1);
+			String csv2 = calculatorFullBean.measure(json2);
+			if (!csv1.equals(csv2)) {
+				logger.info(json1);
+				logger.info(json2);
+				logger.info("result1: " + 
+					StringUtils.join(calculator.getLabelledResults(), ", "));
+				logger.info("result2: " +
+					StringUtils.join(calculatorFullBean.getLabelledResults(), ", "));
+			}
+
+			assertEquals(csv1, csv2);
+		}
+	}
+
+	@Test
+	public void testFullBean() {
+		List<String> ids = Arrays.asList(
+			"/92099/BibliographicResource_2000081662432",
+			"/00721/plink__f_1_513149",
+			"/2021631/afbeelding_34f1a43e_501d_a467_3af4_cf5f330f8b04"
+		);
+		for (String id : ids) {
+			Document record1 = getRecord(id, true);
+			String json1 = record1.toJson(codec);
+			Document record2 = getRecord(id, false);
+			String json2 = record2.toJson(codec);
+
+			// logger.info("measure with normal calculator");
+			String csv1 = calculator.measure(json1);
+
+			// logger.info("measure with fullbean calculator");
+			String csv2 = calculatorFullBean.measure(json2);
+
+			if (!csv1.equals(csv2)) {
+				logger.log(Level.INFO, "id{0}", id);
+				logger.log(Level.INFO, "1: {0}", 
+					StringUtils.join(calculator.getLabelledResults(), ", "));
+				logger.log(Level.INFO, "2: {0}",
+					StringUtils.join(calculatorFullBean.getLabelledResults(), ", "));
+			}
+			assertEquals(csv1, csv2);
 		}
 	}
 
@@ -1910,31 +1903,54 @@ public class DocumentTransformerTest {
 					for (String ekey : entity.keySet()) {
 						if (entity.get(ekey) instanceof Document) {
 							Document field = (Document) entity.get(ekey);
-							System.err.println(String.format(" \t key: %s: %s",
-									  ekey, entity.get(ekey).getClass().getCanonicalName()));
+							System.err.println(
+								String.format(" \t key: %s: %s",
+								ekey,
+								entity.get(ekey).getClass().getCanonicalName())
+							);
 							for (String fkey : field.keySet()) {
-								System.err.println(String.format(" \t\t key: %s: %s",
-										  fkey, (field.get(fkey) != null ? field.get(fkey).getClass().getCanonicalName() : "null")));
+								System.err.println(
+									String.format(" \t\t key: %s: %s",
+									fkey,
+									(field.get(fkey) != null 
+										? field.get(fkey).getClass().getCanonicalName()
+										: "null"))
+								);
 							}
 						}
-						assertFalse(String.format("field '%s' is a Document (in %s - %s)", ekey, key, id), entity.get(ekey) instanceof Document);
+						assertFalse(
+							String.format("field '%s' is a Document (in %s - %s)", ekey, key, id),
+							entity.get(ekey) instanceof Document
+						);
 					}
 				}
 			}
 		}
-
-		// String json = record.toJson(codec);
-		// System.err.println("json: " + json);
 	}
 
 	private Document getRecord(String recordId) {
+		return getRecord(recordId, true);
+	}
+
+	private Document getRecord(String recordId, boolean withFieldRename) {
 		Bson filter = Filters.eq("about", recordId);
 		Document record = mongoDb.getCollection("record").find(filter).first();
 		if (record != null) {
-			transformer.transform(record);
+			transformer.transform(record, withFieldRename);
 		} else {
 			System.err.println("NULL: " + recordId);
 		}
 		return record;
+	}
+
+	private String retrieveJsonFromCassandra(String id) {
+		if (id.startsWith("/"))
+			id = id.substring(1);
+
+		ResultSet results = session.execute(String.format("SELECT content FROM edm WHERE id = '%s'", id));
+		Row record = results.one();
+		if (record != null)
+			return record.getString("content").replace("\"identifier\":\"", "\"identifier\":\"/");
+		return null;
 	}
 }
