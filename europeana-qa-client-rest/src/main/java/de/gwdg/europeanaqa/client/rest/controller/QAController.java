@@ -85,7 +85,10 @@ public class QAController {
 	public QAController() {
 	}
 
-	@RequestMapping(value = "/hello", method = RequestMethod.GET)
+	@RequestMapping(
+		value = "/hello",
+		method = RequestMethod.GET
+	)
 	public String hello() throws URISyntaxException, IOException {
 		// return this.getClass().getClassLoader().getResource("europeana-qa.custom.properties").toString();
 		return System.getProperty("java.class.path");
@@ -108,9 +111,10 @@ public class QAController {
 	}
 
 	@RequestMapping(
-			value = "/batch/{part1}/{part2}",
-			method = RequestMethod.GET,
-			produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+		value = "/batch/{part1}/{part2}",
+		method = RequestMethod.GET,
+		produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+	)
 	public @ResponseBody Result getBatchCsv(
 			@PathVariable("part1") String part1,
 			@PathVariable("part2") String part2,
@@ -140,9 +144,10 @@ public class QAController {
 	}
 
 	@RequestMapping(
-			value = "/{part1}/{part2}.csv",
-			method = RequestMethod.GET,
-			produces = "text/csv")
+		value = "/{part1}/{part2}.csv",
+		method = RequestMethod.GET,
+		produces = "text/csv"
+	)
 	public String getCsv(
 			@PathVariable("part1") String part1,
 			@PathVariable("part2") String part2
@@ -155,9 +160,10 @@ public class QAController {
 	}
 
 	@RequestMapping(
-			value = "/{part1}/{part2}.json", 
-			method = RequestMethod.GET,
-			produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+		value = "/{part1}/{part2}.json",
+		method = RequestMethod.GET,
+		produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+	)
 	public @ResponseBody
 	Result getJson(
 			@PathVariable("part1") String part1,
@@ -184,30 +190,18 @@ public class QAController {
 	}
 
 	@RequestMapping(
-			value = "/batch/measuring/start", 
-			method = RequestMethod.GET)
+		value = "/batch/measuring/start", 
+		method = RequestMethod.GET
+	)
 	public @ResponseBody Result startMeasuring() throws URISyntaxException, IOException {
 		String sessionId = sessionManager.create();
 		return buildResult(sessionId, "success");
 	}
 
-	private Result buildResult(String sessionId, String status) {
-		Result result = new Result();
-		result.setSessionId(sessionId);
-		result.setStatus(sessionManager.getState(sessionId).name());
-		result.setResult(status);
-		return result;
-	}
-
-	private Result buildResult(String sessionId, String status, String message) {
-		Result result = buildResult(sessionId, status);
-		result.setMessage(message);
-		return result;
-	}
-
 	@RequestMapping(
-			value = "/batch/measuring/{sessionId}/stop", 
-			method = RequestMethod.GET)
+		value = "/batch/measuring/{sessionId}/stop", 
+		method = RequestMethod.GET
+	)
 	public @ResponseBody Result stopMeasuring(
 			@PathVariable("sessionId") String sessionId
 	) throws URISyntaxException, IOException {
@@ -222,8 +216,9 @@ public class QAController {
 	}
 
 	@RequestMapping(
-			value = "/batch/analyzing/{sessionId}/start",
-			method = RequestMethod.GET)
+		value = "/batch/analyzing/{sessionId}/start",
+		method = RequestMethod.GET
+	)
 	public @ResponseBody Result startAnalzying(
 			@PathVariable("sessionId") String sessionId
 	) throws URISyntaxException, IOException {
@@ -251,9 +246,12 @@ public class QAController {
 		return result;
 	}
 
-	@RequestMapping(value = "/batch/analyzing/{sessionId}/status", method = RequestMethod.GET)
+	@RequestMapping(
+		value = "/batch/analyzing/{sessionId}/status",
+		method = RequestMethod.GET
+	)
 	public @ResponseBody Result getAnlyzingStatus(
-			  @PathVariable("sessionId") String sessionId
+			@PathVariable("sessionId") String sessionId
 	) throws URISyntaxException, IOException {
 		Result result;
 		if (sessionId == null || !sessionManager.validate(sessionId)) {
@@ -273,10 +271,13 @@ public class QAController {
 		return result;
 	}
 
-	@RequestMapping(value = "/batch/analyzing/{sessionId}/retrieve", method = RequestMethod.GET)
+	@RequestMapping(
+		value = "/batch/analyzing/{sessionId}/retrieve",
+		method = RequestMethod.GET
+	)
 	public void retrieveAnlyzingResult(
-			  @PathVariable("sessionId") String sessionId,
-			  HttpServletResponse response
+			@PathVariable("sessionId") String sessionId,
+			HttpServletResponse response
 	) throws URISyntaxException, IOException {
 		if (sessionManager.getState(sessionId).equals(SessionDAO.State.ANALYZING)) {
 			Process process = sessionManager.getAnalyzingProcess(sessionId);
@@ -296,6 +297,20 @@ public class QAController {
 				}
 			}
 		}
+	}
+
+	private Result buildResult(String sessionId, String status) {
+		Result result = new Result();
+		result.setSessionId(sessionId);
+		result.setStatus(sessionManager.getState(sessionId).name());
+		result.setResult(status);
+		return result;
+	}
+
+	private Result buildResult(String sessionId, String status, String message) {
+		Result result = buildResult(sessionId, status);
+		result.setMessage(message);
+		return result;
 	}
 
 	private void zipImageFiles(String sessionId, ZipOutputStream zipStream) throws IOException {
