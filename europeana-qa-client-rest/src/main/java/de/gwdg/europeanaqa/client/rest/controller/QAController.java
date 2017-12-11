@@ -394,6 +394,7 @@ public class QAController {
 		logger.info("getQueryString: " + bound);
 		ResultSet results = cassandraSession.execute(bound);
 		Row row = results.one();
+		logger.info("is null? " + (row == null));
 		logger.info(String.format("reading %s from Cassandra\n", row.getString("id")));
 		String json = row.getString("content");
 
