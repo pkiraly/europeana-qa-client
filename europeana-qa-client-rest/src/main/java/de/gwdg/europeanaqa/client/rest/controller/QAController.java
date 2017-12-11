@@ -387,7 +387,9 @@ public class QAController {
 			cassandraPreparedStatement = cassandraSession.prepare(toPrepare);
 		}
 
-		ResultSet results = cassandraSession.execute(cassandraPreparedStatement.bind(recordId));
+		BoundStatement bound = cassandraPreparedStatement.bind(recordId);
+		logger.info("getQueryString: " + bound);
+		ResultSet results = cassandraSession.execute(bound);
 		Row row = results.one();
 		logger.info(String.format("reading %s from Cassandra\n", row.getString("id")));
 		String json = row.getString("content");
