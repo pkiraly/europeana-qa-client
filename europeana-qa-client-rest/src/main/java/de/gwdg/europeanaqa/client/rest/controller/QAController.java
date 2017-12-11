@@ -382,7 +382,7 @@ public class QAController {
 			cassandraCluster = Cluster.builder().addContactPoint("127.0.0.1").build();
 		if (cassandraSession == null) {
 			cassandraSession = cassandraCluster.connect("europeana");
-			SimpleStatement toPrepare = (SimpleStatement) new SimpleStatement("SELECT content FROM edm WHERE id=?")
+			SimpleStatement toPrepare = (SimpleStatement) new SimpleStatement("SELECT id, content FROM edm WHERE id=?")
 				.setConsistencyLevel(ConsistencyLevel.QUORUM);
 			cassandraPreparedStatement = cassandraSession.prepare(toPrepare);
 		}
