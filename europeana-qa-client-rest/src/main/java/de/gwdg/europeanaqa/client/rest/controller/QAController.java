@@ -1,5 +1,6 @@
 package de.gwdg.europeanaqa.client.rest.controller;
 
+import com.datastax.driver.core.*;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import de.gwdg.europeanaqa.api.calculator.EdmCalculatorFacade;
@@ -56,6 +57,10 @@ public class QAController {
 		"", ".collector", ".count", ".freq", ".hist", "frequencyTable"
 	);
 
+	Cluster cassandraCluster;
+	Session cassandraSession;
+	PreparedStatement cassandraPreparedStatement;
+
 	@Autowired
 	ApplicationConfiguration config;
 
@@ -103,11 +108,18 @@ public class QAController {
 	public String getRecord(
 			@PathVariable("part1") String part1,
 			@PathVariable("part2") String part2,
-			@RequestParam(value = "sessionId", required = false) String sessionId
+			@RequestParam(value = "sessionId", required = false) String sessionId,
+			@RequestParam(value = "dataSource", required = false) String dataSource
 	)
 			throws URISyntaxException, IOException {
+		if (dataSource == null || ((!dataSource.equals("cassandra") && !dataSource.equals("mongo"))))
+			dataSource = "mongo";
+		logger.info(String.format("part1: %s, part2: %s", part1, part2));
 		String recordId = String.format(RECORDID_TPL, part1, part2);
-		return getRecordAsJson(recordId);
+		if (dataSource.equals("cassandra"))
+			return getRecordAsJsonFromCassandra(recordId);
+		else
+			return getRecordAsJsonFromMongo(recordId);
 	}
 
 	@RequestMapping(
@@ -129,7 +141,7 @@ public class QAController {
 				result = buildResult(sessionId, "failure", "Invalid sessionId.");
 			} else {
 				String recordId = String.format(RECORDID_TPL, part1, part2);
-				String json = getRecordAsJson(recordId);
+				String json = getRecordAsJsonFromMongo(recordId);
 				String csv = csvCalculator.measure(json);
 				if (sessionManager.getState(sessionId).equals(SessionDAO.State.MEASURING)) {
 					fileManager.writeOrAppend(sessionId + ".csv", csv);
@@ -154,7 +166,7 @@ public class QAController {
 	)
 			throws URISyntaxException, IOException {
 		String recordId = String.format(RECORDID_TPL, part1, part2);
-		String json = getRecordAsJson(recordId);
+		String json = getRecordAsJsonFromMongo(recordId);
 		String csv = csvCalculator.measure(json);
 		return csv;
 	}
@@ -171,7 +183,7 @@ public class QAController {
 			@RequestParam(value = "sessionId", required = false) String sessionId
 	) throws URISyntaxException, IOException {
 		String recordId = String.format(RECORDID_TPL, part1, part2);
-		String json = getRecordAsJson(recordId);
+		String json = getRecordAsJsonFromMongo(recordId);
 		if (config.getRunUniqueness()) {
 			jsonCalculator.collectTfIdfTerms(true);
 		}
@@ -355,12 +367,30 @@ public class QAController {
 		}
 	}
 
-	private String getRecordAsJson(String recordId) {
+	private String getRecordAsJsonFromMongo(String recordId) {
 		Bson condition = Filters.eq("about", recordId);
 		Document record = mongoDb.getCollection("record").find(condition).first();
 		transformer.transform(record);
 		String json = record.toJson(codec);
 		// logger.info("record: " + json);
+		return json;
+	}
+
+	private String getRecordAsJsonFromCassandra(String recordId) {
+		if (cassandraCluster == null)
+			cassandraCluster = Cluster.builder().addContactPoint("127.0.0.1").build();
+		if (cassandraSession == null) {
+			cassandraSession = cassandraCluster.connect("europeana");
+			SimpleStatement toPrepare = (SimpleStatement) new SimpleStatement("SELECT content FROM edm WHERE id=?")
+				.setConsistencyLevel(ConsistencyLevel.QUORUM);
+			cassandraPreparedStatement = cassandraSession.prepare(toPrepare);
+		}
+
+		ResultSet results = cassandraSession.execute(cassandraPreparedStatement.bind("recordId"));
+		Row row = results.one();
+		logger.info(String.format("%s\n", row.getString("id")));
+		String json = row.getString("content");
+
 		return json;
 	}
 
