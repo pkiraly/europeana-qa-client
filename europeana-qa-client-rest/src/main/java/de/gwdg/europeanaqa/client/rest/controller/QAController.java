@@ -112,9 +112,10 @@ public class QAController {
 			@RequestParam(value = "dataSource", required = false) String dataSource
 	)
 			throws URISyntaxException, IOException {
-		if (dataSource == null || ((!dataSource.equals("cassandra") && !dataSource.equals("mongo"))))
+		if (dataSource == null || (!dataSource.equals("cassandra") && !dataSource.equals("mongo")))
 			dataSource = "mongo";
-		logger.info(String.format("part1: %s, part2: %s", part1, part2));
+
+		logger.info(String.format("part1: %s, part2: %s, dataSource: %s", part1, part2, dataSource));
 		String recordId = String.format(RECORDID_TPL, part1, part2);
 		if (dataSource.equals("cassandra"))
 			return getRecordAsJsonFromCassandra(recordId);
