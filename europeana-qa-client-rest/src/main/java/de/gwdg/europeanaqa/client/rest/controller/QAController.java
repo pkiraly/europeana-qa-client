@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.conversions.Bson;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -50,7 +51,8 @@ public class QAController {
 	static final Logger logger = Logger.getLogger(QAController.class.getCanonicalName());
 
 	private static final int BUFFER_SIZE = 4096;
-	private final static String RECORDID_TPL = "/%s/%s";
+	private final static String MONGO_RECORDID_TPL = "/%s/%s";
+	private final static String CASSANDRA_RECORDID_TPL = "%s/%s";
 	private File rDir; // = new File("/home/kiru/git/europeana-qa-r");
 	private final static String R_SCRIPT = "get-histograms-and-stats.R";
 	private final static List<String> JSON_SUFFIXES = Arrays.asList(
@@ -112,15 +114,30 @@ public class QAController {
 			@RequestParam(value = "dataSource", required = false) String dataSource
 	)
 			throws URISyntaxException, IOException {
-		if (dataSource == null || (!dataSource.equals("cassandra") && !dataSource.equals("mongo")))
-			dataSource = "mongo";
+		dataSource = checkDataSource(dataSource);
 
 		logger.info(String.format("part1: %s, part2: %s, dataSource: %s", part1, part2, dataSource));
-		String recordId = String.format(RECORDID_TPL, part1, part2);
+		String recordId = getRecordId(dataSource, part1, part2);
+		return getRecordAsJson(dataSource, recordId);
+	}
+
+	private String checkDataSource(String dataSource) {
+		if (dataSource == null || (!dataSource.equals("cassandra") && !dataSource.equals("mongo")))
+			dataSource = "mongo";
+		return dataSource;
+	}
+
+	private String getRecordAsJson(String dataSource, String recordId) {
 		if (dataSource.equals("cassandra"))
-			return getRecordAsJsonFromCassandra(recordId.substring(1)); // remove trailing '/'
+			return getRecordAsJsonFromCassandra(recordId);
 		else
 			return getRecordAsJsonFromMongo(recordId);
+	}
+
+	private String getRecordId(String dataSource, String part1, String part2) {
+		if (dataSource.equals("cassandra"))
+			return String.format(CASSANDRA_RECORDID_TPL, part1, part2);
+		return String.format(MONGO_RECORDID_TPL, part1, part2);
 	}
 
 	@RequestMapping(
@@ -141,7 +158,7 @@ public class QAController {
 			if (!sessionManager.validate(sessionId)) {
 				result = buildResult(sessionId, "failure", "Invalid sessionId.");
 			} else {
-				String recordId = String.format(RECORDID_TPL, part1, part2);
+				String recordId = String.format(MONGO_RECORDID_TPL, part1, part2);
 				String json = getRecordAsJsonFromMongo(recordId);
 				String csv = csvCalculator.measure(json);
 				if (sessionManager.getState(sessionId).equals(SessionDAO.State.MEASURING)) {
@@ -166,7 +183,7 @@ public class QAController {
 			@PathVariable("part2") String part2
 	)
 			throws URISyntaxException, IOException {
-		String recordId = String.format(RECORDID_TPL, part1, part2);
+		String recordId = String.format(MONGO_RECORDID_TPL, part1, part2);
 		String json = getRecordAsJsonFromMongo(recordId);
 		String csv = csvCalculator.measure(json);
 		return csv;
@@ -181,10 +198,13 @@ public class QAController {
 	Result getJson(
 			@PathVariable("part1") String part1,
 			@PathVariable("part2") String part2,
-			@RequestParam(value = "sessionId", required = false) String sessionId
+			@RequestParam(value = "sessionId", required = false) String sessionId,
+			@RequestParam(value = "dataSource", required = false) String dataSource
 	) throws URISyntaxException, IOException {
-		String recordId = String.format(RECORDID_TPL, part1, part2);
-		String json = getRecordAsJsonFromMongo(recordId);
+		dataSource = checkDataSource(dataSource);
+		String recordId = getRecordId(dataSource, part1, part2);
+		String json = getRecordAsJson(dataSource, recordId);
+
 		if (config.getRunUniqueness()) {
 			jsonCalculator.collectTfIdfTerms(true);
 		}
