@@ -118,7 +118,7 @@ public class QAController {
 		logger.info(String.format("part1: %s, part2: %s, dataSource: %s", part1, part2, dataSource));
 		String recordId = String.format(RECORDID_TPL, part1, part2);
 		if (dataSource.equals("cassandra"))
-			return getRecordAsJsonFromCassandra(recordId);
+			return getRecordAsJsonFromCassandra(recordId.substring(1)); // remove trailing '/'
 		else
 			return getRecordAsJsonFromMongo(recordId);
 	}
