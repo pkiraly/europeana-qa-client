@@ -382,14 +382,14 @@ public class QAController {
 			cassandraCluster = Cluster.builder().addContactPoint("127.0.0.1").build();
 		if (cassandraSession == null) {
 			cassandraSession = cassandraCluster.connect("europeana");
-			SimpleStatement toPrepare = (SimpleStatement) new SimpleStatement("SELECT id, content FROM edm WHERE id=?")
+			SimpleStatement toPrepare = (SimpleStatement) new SimpleStatement("SELECT id, content FROM edm WHERE id = ?")
 				.setConsistencyLevel(ConsistencyLevel.QUORUM);
 			cassandraPreparedStatement = cassandraSession.prepare(toPrepare);
 		}
 
-		ResultSet results = cassandraSession.execute(cassandraPreparedStatement.bind("recordId"));
+		ResultSet results = cassandraSession.execute(cassandraPreparedStatement.bind(recordId));
 		Row row = results.one();
-		logger.info(String.format("%s\n", row.getString("id")));
+		logger.info(String.format("reading %s from Cassandra\n", row.getString("id")));
 		String json = row.getString("content");
 
 		return json;
