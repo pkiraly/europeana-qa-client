@@ -121,7 +121,7 @@ public class ApplicationConfiguration {
 		calculator.enableFieldCardinalityMeasurement(true);
 		calculator.enableProblemCatalogMeasurement(true);
 		calculator.enableLanguageMeasurement(true);
-		calculator.enableLanguageSaturationMeasurement(true);
+		calculator.enableMultilingualSaturationMeasurement(true);
 		calculator.completenessCollectFields(true);
 		if (runUniqueness)
 			calculator.enableTfIdfMeasurement(true);
