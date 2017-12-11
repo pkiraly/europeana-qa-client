@@ -390,11 +390,10 @@ public class QAController {
 			cassandraPreparedStatement = cassandraSession.prepare("SELECT id, content FROM edm WHERE id = ?");
 		}
 
-		boolean usePreparedStatement = false;
+		boolean usePreparedStatement = true;
 		ResultSet results = null;
 		if (usePreparedStatement) {
 			BoundStatement bound = cassandraPreparedStatement.bind(recordId);
-			logger.info("getQueryString: " + bound);
 			results = cassandraSession.execute(bound);
 		} else {
 			String query = String.format("SELECT id, content FROM edm WHERE id = '%s'", recordId);
