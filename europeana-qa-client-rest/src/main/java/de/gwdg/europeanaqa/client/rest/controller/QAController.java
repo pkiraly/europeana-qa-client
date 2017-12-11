@@ -382,26 +382,16 @@ public class QAController {
 			cassandraCluster = Cluster.builder().addContactPoint("127.0.0.1").build();
 		if (cassandraSession == null) {
 			cassandraSession = cassandraCluster.connect("europeana");
-			/*
-			SimpleStatement toPrepare = (SimpleStatement) new SimpleStatement("SELECT id, content FROM edm WHERE id = ?")
+			SimpleStatement toPrepare = (SimpleStatement) new SimpleStatement("SELECT content FROM edm WHERE id = ?")
 				.setConsistencyLevel(ConsistencyLevel.QUORUM);
 			cassandraPreparedStatement = cassandraSession.prepare(toPrepare);
-			*/
-			cassandraPreparedStatement = cassandraSession.prepare("SELECT id, content FROM edm WHERE id = ?");
+			// cassandraPreparedStatement = cassandraSession.prepare("SELECT content FROM edm WHERE id = ?");
 		}
 
-		boolean usePreparedStatement = true;
 		ResultSet results = null;
-		if (usePreparedStatement) {
-			BoundStatement bound = cassandraPreparedStatement.bind(recordId);
-			results = cassandraSession.execute(bound);
-		} else {
-			String query = String.format("SELECT id, content FROM edm WHERE id = '%s'", recordId);
-			results = cassandraSession.execute(query);
-		}
+		BoundStatement bound = cassandraPreparedStatement.bind(recordId);
+		results = cassandraSession.execute(bound);
 		Row row = results.one();
-		logger.info("is null? " + (row == null));
-		logger.info(String.format("reading %s from Cassandra\n", row.getString("id")));
 		String json = row.getString("content");
 
 		return json;
