@@ -111,12 +111,13 @@ public class QAController {
 			@PathVariable("part1") String part1,
 			@PathVariable("part2") String part2,
 			@RequestParam(value = "sessionId", required = false) String sessionId,
-			@RequestParam(value = "dataSource", required = false) String dataSource
+			@RequestParam(value = "dataSource", required = false) String dataSource,
+			@RequestParam(value = "batchMode", required = false, defaultValue = "false") boolean batchMode
 	)
 			throws URISyntaxException, IOException {
 		dataSource = checkDataSource(dataSource);
-
-		logger.info(String.format("part1: %s, part2: %s, dataSource: %s", part1, part2, dataSource));
+		if (!batchMode)
+			logger.info(String.format("part1: %s, part2: %s, dataSource: %s", part1, part2, dataSource));
 		String recordId = getRecordId(dataSource, part1, part2);
 		return getRecordAsJson(dataSource, recordId);
 	}
