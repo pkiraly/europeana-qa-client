@@ -31,6 +31,7 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonParseException;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -132,12 +133,13 @@ public class QAController {
 	public String resolveJsonFragment(
 		@RequestParam(value = "jsonFragment", required = true) String jsonFragment,
 		@RequestParam(value = "sessionId", required = false) String sessionId,
+		@RequestParam(value = "recordId", required = false) String recordId,
 		@RequestParam(value = "batchMode", required = false, defaultValue = "false") boolean batchMode
 	)
 		throws URISyntaxException, IOException {
 		if (!batchMode)
 			logger.info(String.format("resolving json fragment: %s", jsonFragment));
-		return resolveMongoReferences(jsonFragment);
+		return resolveMongoReferences(jsonFragment, recordId);
 	}
 
 	private String checkDataSource(String dataSource) {
@@ -416,8 +418,19 @@ public class QAController {
 		return json;
 	}
 
-	private String resolveMongoReferences(String jsonFragment) {
-		Document record = Document.parse(jsonFragment);
+	private String resolveMongoReferences(String jsonFragment, String recordId) {
+		Document record = null;
+		try {
+			record = Document.parse(jsonFragment);
+		} catch (JsonParseException e) {
+			logger.severe(e.getLocalizedMessage());
+			logger.severe("JSON: " + jsonFragment);
+			Bson condition = Filters.eq("about", recordId);
+			record = mongoDb.getCollection("record").find(condition).first();
+		}
+		if (record == null)
+			return "";
+
 		transformer.transform(record);
 		String json = record.toJson(codec);
 		// logger.info("record: " + json);
