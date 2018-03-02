@@ -10,14 +10,10 @@ import de.gwdg.europeanaqa.client.rest.config.FileManager;
 import de.gwdg.europeanaqa.client.rest.config.SessionDAO;
 import de.gwdg.europeanaqa.client.rest.config.SessionManager;
 import de.gwdg.europeanaqa.client.rest.model.Result;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+
+import java.io.*;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
@@ -421,12 +417,14 @@ public class QAController {
 	private String resolveMongoReferences(String jsonFragment, String recordId) {
 		Document record = null;
 		try {
-			record = Document.parse(jsonFragment);
+			record = Document.parse(URLDecoder.decode(jsonFragment, "UTF-8"));
 		} catch (JsonParseException e) {
 			logger.severe(e.getLocalizedMessage());
 			logger.severe("JSON: " + jsonFragment);
 			Bson condition = Filters.eq("about", recordId);
 			record = mongoDb.getCollection("record").find(condition).first();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
 		}
 		if (record == null)
 			return "";
