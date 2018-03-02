@@ -263,7 +263,6 @@ public class DocumentTransformer {
 							record.remove(entity);
 						}
 					} else {
-						System.err.println(((ArrayList)record.get(entity)).get(0).getClass());
 						List<DBRef> refs = (List<DBRef>) record.get(entity);
 						if (refs != null && refs.size() > 0) {
 							List<Document> transformedValues = new ArrayList<>();
