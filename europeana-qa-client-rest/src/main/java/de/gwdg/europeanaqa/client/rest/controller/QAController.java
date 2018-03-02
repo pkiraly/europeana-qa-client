@@ -126,7 +126,7 @@ public class QAController {
 
 	@RequestMapping(
 		value = "/resolve-json-fragment",
-		method = RequestMethod.GET,
+		method = {RequestMethod.GET, RequestMethod.POST},
 		produces = MediaType.APPLICATION_JSON_UTF8_VALUE
 	)
 	public String resolveJsonFragment(
