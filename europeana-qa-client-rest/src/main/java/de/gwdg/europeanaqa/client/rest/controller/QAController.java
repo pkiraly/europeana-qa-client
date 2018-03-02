@@ -421,11 +421,18 @@ public class QAController {
 		} catch (JsonParseException e) {
 			logger.severe(e.getLocalizedMessage());
 			logger.severe("JSON: " + jsonFragment);
+		} catch (UnsupportedEncodingException e) {
+			logger.severe(e.getLocalizedMessage());
+			logger.severe("JSON: " + jsonFragment);
+		} catch (IllegalArgumentException e) {
+			logger.severe(e.getLocalizedMessage());
+			logger.severe("JSON: " + jsonFragment);
+		}
+		if (record == null) {
 			Bson condition = Filters.eq("about", recordId);
 			record = mongoDb.getCollection("record").find(condition).first();
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
 		}
+
 		if (record == null)
 			return "";
 
