@@ -60,8 +60,13 @@ public class DocumentTransformerTest {
 		CodecRegistry codecRegistry = CodecRegistries.fromRegistries(MongoClient.getDefaultCodecRegistry());
 		codec = new DocumentCodec(codecRegistry, new BsonTypeClassMap());
 
-		MongoClient mongoClient = new MongoClient("localhost", 27017);
-		mongoDb = mongoClient.getDatabase("europeana");
+		// String host = "localhost";
+		String host = "144.76.218.178";
+		// String database = "localhost";
+		String database = "europeana_production_publish_1";
+
+		MongoClient mongoClient = new MongoClient(host, 27017);
+		mongoDb = mongoClient.getDatabase(database);
 		// cluster = Cluster.builder().addContactPoint("127.0.0.1").build();
 		// session = cluster.connect("europeana");
 
@@ -1846,6 +1851,15 @@ public class DocumentTransformerTest {
 			}
 			testLanguages(record, id);
 		}
+	}
+
+	@Test
+	public void resolvingJsonFragment() {
+		String jsonFragment = "{ \"_id\" : { \"$oid\" : \"511f6ab62cdc99ca607ba31e\"} , \"className\" : \"eu.europeana.corelib.solr.bean.impl.FullBeanImpl\" , \"about\" : \"/09901/7A7F16A9DA3AF87FA590331C8AEB78C534C28CA8\" , \"title\" : [ \"Bateaux de pêche, Portugal\"] , \"year\" : [ \"1936\"] , \"type\" : \"IMAGE\" , \"europeanaCompleteness\" : 5 , \"optOut\" : false , \"places\" : [ { \"$ref\" : \"Place\" , \"$id\" : { \"$oid\" : \"577f93afa560283b1c209591\"}}] , \"timespans\" : [ { \"$ref\" : \"Timespan\" , \"$id\" : { \"$oid\" : \"55b7af7f31daa895c740c3ea\"}} , { \"$ref\" : \"Timespan\" , \"$id\" : { \"$oid\" : \"55b7af7f31daa895c740bf85\"}} , { \"$ref\" : \"Timespan\" , \"$id\" : { \"$oid\" : \"55b7af7d31daa895c740a8dd\"}} , { \"$ref\" : \"Timespan\" , \"$id\" : { \"$oid\" : \"55b7af7f31daa895c740be75\"}} , { \"$ref\" : \"Timespan\" , \"$id\" : { \"$oid\" : \"55b7af7f31daa895c740c062\"}} , { \"$ref\" : \"Timespan\" , \"$id\" : { \"$oid\" : \"55b7af7e31daa895c740aad4\"}}] , \"aggregations\" : [ { \"$ref\" : \"Aggregation\" , \"$id\" : { \"$oid\" : \"511f6ab62cdc99ca607ba314\"}}] , \"providedCHOs\" : [ { \"$ref\" : \"ProvidedCHO\" , \"$id\" : { \"$oid\" : \"511f6ab62cdc99ca607ba31a\"}}] , \"europeanaAggregation\" : { \"$ref\" : \"EuropeanaAggregation\" , \"$id\" : { \"$oid\" : \"511f6ab62cdc99ca607ba31c\"}} , \"proxies\" : [ { \"$ref\" : \"PhysicalThing\" , \"$id\" : { \"$oid\" : \"511f6ab62cdc99ca607ba316\"}} , { \"$ref\" : \"PhysicalThing\" , \"$id\" : { \"$oid\" : \"511f6ab62cdc99ca607ba318\"}}] , \"europeanaCollectionName\" : [ \"09901_CH_MediathequeValais_k\"]}";
+		Document record = Document.parse(jsonFragment);
+		transformer.transform(record);
+		String json = record.toJson(codec);
+		assertTrue(json.contains("An Phortaingéil"));
 	}
 
 	private void testFieldNames(Document record, String id) throws InvalidJsonException {

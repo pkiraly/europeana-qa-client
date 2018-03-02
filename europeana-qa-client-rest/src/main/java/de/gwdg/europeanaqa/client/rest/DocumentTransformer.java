@@ -19,6 +19,7 @@ import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.types.ObjectId;
 
 /**
  *
@@ -241,22 +242,45 @@ public class DocumentTransformer {
 			if (record.containsKey(entity)) {
 				Object value = record.get(entity);
 				if (value instanceof List) {
-					List<DBRef> refs = (List<DBRef>) record.get(entity);
-					if (refs != null && refs.size() > 0) {
-						List<Document> transformedValues = new ArrayList<>();
-						for (DBRef ref : refs) {
-							Document doc = resolveReference(ref, withFieldRename);
-							transformedValues.add(doc);
-						}
-						if (withFieldRename) {
-							record.remove(entity);
-							record.put(entities.get(entity), transformedValues);
+					if (((ArrayList)record.get(entity)).get(0).getClass().getCanonicalName().equals("org.bson.Document")) {
+						List<Document> refs = (List<Document>) record.get(entity);
+						if (refs != null && refs.size() > 0) {
+							List<Document> transformedValues = new ArrayList<>();
+							for (Document ref : refs) {
+								String collection = (String) ref.get("$ref");
+								ObjectId id = (ObjectId) ref.get("$id");
+								Document doc = resolveReference(collection, id, withFieldRename);
+								transformedValues.add(doc);
+							}
+							if (withFieldRename) {
+								record.remove(entity);
+								record.put(entities.get(entity), transformedValues);
+							} else {
+								record.put(entity, transformedValues);
+							}
 						} else {
-							record.put(entity, transformedValues);
+							// System.err.println("EMPTY: " + entity + " " + refs);
+							record.remove(entity);
 						}
 					} else {
-						// System.err.println("EMPTY: " + entity + " " + refs);
-						record.remove(entity);
+						System.err.println(((ArrayList)record.get(entity)).get(0).getClass());
+						List<DBRef> refs = (List<DBRef>) record.get(entity);
+						if (refs != null && refs.size() > 0) {
+							List<Document> transformedValues = new ArrayList<>();
+							for (DBRef ref : refs) {
+								Document doc = resolveReference(ref, withFieldRename);
+								transformedValues.add(doc);
+							}
+							if (withFieldRename) {
+								record.remove(entity);
+								record.put(entities.get(entity), transformedValues);
+							} else {
+								record.put(entity, transformedValues);
+							}
+						} else {
+							// System.err.println("EMPTY: " + entity + " " + refs);
+							record.remove(entity);
+						}
 					}
 				} else if (value instanceof DBRef) {
 					if (withFieldRename) {
@@ -265,17 +289,56 @@ public class DocumentTransformer {
 					} else {
 						record.put(entity, resolveReference((DBRef) value, withFieldRename));
 					}
+				} else if (value instanceof Document) {
+					String collection = (String) ((Document)value).get("$ref");
+					ObjectId id = (ObjectId) ((Document)value).get("$id");
+					Document doc = resolveReference(collection, id, withFieldRename);
+					if (withFieldRename) {
+						record.remove(entity);
+						record.put(entities.get(entity), doc);
+					} else {
+						record.put(entity, doc);
+					}
 				} else {
 					logger.log(Level.SEVERE, "UNKNOWN: {0} {1}", new Object[]{entity, value.getClass().getCanonicalName()});
 				}
 			}
 		}
-
 	}
 
 	private Document resolveReference(DBRef ref, boolean withFieldRename) {
 		String collection = ref.getCollectionName();
+		ObjectId id = (ObjectId) ref.getId();
+		return resolveReference(collection, id, withFieldRename);
+		/*
 		Document doc = mongoDb.getCollection(collection).find(Filters.eq("_id", ref.getId())).first();
+		if (doc != null) {
+			doc.remove("_id");
+			doc.remove("className");
+			transformLanguageStructure(doc);
+			if (collection.equals("PhysicalThing") && withFieldRename) {
+				doc.put("europeanaProxy", Arrays.asList(((Boolean)doc.get("europeanaProxy")).toString()));
+			}
+			if (withFieldRename)
+				replaceKeys(doc);
+			for (String key : subEntities.keySet()) {
+				if (doc.containsKey(key)) {
+					List<Document> subDocs = new ArrayList<Document>();
+					List<DBRef> subRefs = (List<DBRef>) doc.get(key);
+					for (DBRef subRef : subRefs) {
+						subDocs.add(resolveReference(subRef, withFieldRename));
+					}
+					doc.remove(key);
+					doc.put(subEntities.get(key), subDocs);
+				}
+			}
+		}
+		return doc;
+		*/
+	}
+
+	private Document resolveReference(String collection, ObjectId id, boolean withFieldRename) {
+		Document doc = mongoDb.getCollection(collection).find(Filters.eq("_id", id)).first();
 		if (doc != null) {
 			doc.remove("_id");
 			doc.remove("className");
