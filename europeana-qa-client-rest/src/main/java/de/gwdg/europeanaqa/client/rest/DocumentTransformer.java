@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.DocumentCodec;

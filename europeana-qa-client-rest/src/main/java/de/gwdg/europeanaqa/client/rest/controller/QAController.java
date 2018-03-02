@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletResponse;
+
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.conversions.Bson;
@@ -120,6 +122,22 @@ public class QAController {
 			logger.info(String.format("part1: %s, part2: %s, dataSource: %s", part1, part2, dataSource));
 		String recordId = getRecordId(dataSource, part1, part2);
 		return getRecordAsJson(dataSource, recordId);
+	}
+
+	@RequestMapping(
+		value = "/resolve-json-fragment",
+		method = RequestMethod.GET,
+		produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+	)
+	public String resolveJsonFragment(
+		@RequestParam(value = "jsonFragment", required = true) String jsonFragment,
+		@RequestParam(value = "sessionId", required = false) String sessionId,
+		@RequestParam(value = "batchMode", required = false, defaultValue = "false") boolean batchMode
+	)
+		throws URISyntaxException, IOException {
+		if (!batchMode)
+			logger.info(String.format("resolving json fragment: %s", jsonFragment));
+		return resolveMongoReferences(jsonFragment);
 	}
 
 	private String checkDataSource(String dataSource) {
@@ -397,6 +415,15 @@ public class QAController {
 		// logger.info("record: " + json);
 		return json;
 	}
+
+	private String resolveMongoReferences(String jsonFragment) {
+		Document record = Document.parse(jsonFragment);
+		transformer.transform(record);
+		String json = record.toJson(codec);
+		// logger.info("record: " + json);
+		return json;
+	}
+
 
 	private String getRecordAsJsonFromCassandra(String recordId) {
 		if (cassandraCluster == null)
