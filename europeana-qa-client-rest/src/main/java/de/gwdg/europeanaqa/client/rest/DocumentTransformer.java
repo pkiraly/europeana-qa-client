@@ -242,7 +242,8 @@ public class DocumentTransformer {
 			if (record.containsKey(entity)) {
 				Object value = record.get(entity);
 				if (value instanceof List) {
-					if (((ArrayList)record.get(entity)).get(0).getClass().getCanonicalName().equals("org.bson.Document")) {
+					ArrayList list = (ArrayList)value;
+					if (!list.isEmpty() && list.get(0).getClass().getCanonicalName().equals("org.bson.Document")) {
 						List<Document> refs = (List<Document>) record.get(entity);
 						if (refs != null && refs.size() > 0) {
 							List<Document> transformedValues = new ArrayList<>();

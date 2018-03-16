@@ -130,12 +130,13 @@ public class QAController {
 		@RequestParam(value = "jsonFragment", required = true) String jsonFragment,
 		@RequestParam(value = "sessionId", required = false) String sessionId,
 		@RequestParam(value = "recordId", required = false) String recordId,
+		@RequestParam(value = "withFieldRename", required = false, defaultValue = "true") boolean withFieldRename,
 		@RequestParam(value = "batchMode", required = false, defaultValue = "false") boolean batchMode
 	)
 		throws URISyntaxException, IOException {
 		if (!batchMode)
 			logger.info(String.format("resolving json fragment: %s", jsonFragment));
-		return resolveMongoReferences(jsonFragment, recordId);
+		return resolveMongoReferences(jsonFragment, recordId, withFieldRename);
 	}
 
 	private String checkDataSource(String dataSource) {
@@ -415,6 +416,10 @@ public class QAController {
 	}
 
 	private String resolveMongoReferences(String jsonFragment, String recordId) {
+		return resolveMongoReferences(jsonFragment, recordId, true);
+	}
+
+	private String resolveMongoReferences(String jsonFragment, String recordId, boolean withFieldRename) {
 		Document record = null;
 		try {
 			record = Document.parse(URLDecoder.decode(jsonFragment, "UTF-8"));
@@ -436,7 +441,7 @@ public class QAController {
 		if (record == null)
 			return "";
 
-		transformer.transform(record);
+		transformer.transform(record, withFieldRename);
 		String json = record.toJson(codec);
 		// logger.info("record: " + json);
 		return json;

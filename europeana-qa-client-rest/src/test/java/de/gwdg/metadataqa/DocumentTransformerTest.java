@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static junit.framework.TestCase.*;
+
+import de.gwdg.metadataqa.api.util.CompressionLevel;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.codecs.BsonTypeClassMap;
@@ -70,19 +72,24 @@ public class DocumentTransformerTest {
 		// cluster = Cluster.builder().addContactPoint("127.0.0.1").build();
 		// session = cluster.connect("europeana");
 
-
 		calculator = new EdmCalculatorFacade();
-		calculator.enableFieldCardinalityMeasurement(true);
-		calculator.enableProblemCatalogMeasurement(true);
-		calculator.enableLanguageMeasurement(true);
-		calculator.completenessCollectFields(true);
+		calculator.enableFieldCardinalityMeasurement(false);
+		calculator.enableProblemCatalogMeasurement(false);
+		calculator.enableCompletenessMeasurement(false);
+		calculator.enableFieldExistenceMeasurement(false);
+		calculator.completenessCollectFields(false);
+		calculator.enableLanguageMeasurement(false);
+		calculator.enableMultilingualSaturationMeasurement(true);
 		calculator.configure();
 
 		calculatorFullBean = new EdmCalculatorFacade();
-		calculatorFullBean.enableFieldCardinalityMeasurement(true);
-		calculatorFullBean.enableProblemCatalogMeasurement(true);
-		calculatorFullBean.enableLanguageMeasurement(true);
-		calculatorFullBean.completenessCollectFields(true);
+		calculatorFullBean.enableFieldCardinalityMeasurement(false);
+		calculatorFullBean.enableProblemCatalogMeasurement(false);
+		calculatorFullBean.enableCompletenessMeasurement(false);
+		calculatorFullBean.enableFieldExistenceMeasurement(false);
+		calculatorFullBean.completenessCollectFields(false);
+		calculatorFullBean.enableLanguageMeasurement(false);
+		calculatorFullBean.enableMultilingualSaturationMeasurement(true);
 		calculatorFullBean.setFormat(EdmCalculatorFacade.Formats.FULLBEAN);
 		calculatorFullBean.configure();
 
@@ -1760,7 +1767,6 @@ public class DocumentTransformerTest {
 				  "/92099/BibliographicResource_1000157170729"
 		);
 
-
 		for (String id : ids) {
 			// logger.info(String.format("Testing id %s", id));
 			Document record = getRecord(id);
@@ -1800,25 +1806,47 @@ public class DocumentTransformerTest {
 			"/2021631/afbeelding_34f1a43e_501d_a467_3af4_cf5f330f8b04"
 		);
 		for (String id : ids) {
+			System.err.println(id);
 			Document record1 = getRecord(id, true);
 			String json1 = record1.toJson(codec);
+			// System.err.println(json1);
 			Document record2 = getRecord(id, false);
 			String json2 = record2.toJson(codec);
+			// System.err.println(json2);
 
 			// logger.info("measure with normal calculator");
 			String csv1 = calculator.measure(json1);
+			List<String> header1 = calculator.getHeader();
 
 			// logger.info("measure with fullbean calculator");
 			String csv2 = calculatorFullBean.measure(json2);
+			List<String> header2 = calculatorFullBean.getHeader();
 
 			if (!csv1.equals(csv2)) {
 				logger.log(Level.INFO, "id{0}", id);
-				logger.log(Level.INFO, "1: {0}", 
-					StringUtils.join(calculator.getLabelledResults(), ", "));
-				logger.log(Level.INFO, "2: {0}",
-					StringUtils.join(calculatorFullBean.getLabelledResults(), ", "));
+				// logger.log(Level.INFO, "1: {0}", StringUtils.join(calculator.getLabelledResults(), ", "));
+				// logger.log(Level.INFO, "2: {0}", StringUtils.join(calculatorFullBean.getLabelledResults(), ", "));
+
+				String _csv1 = calculator.getCsv(true, CompressionLevel.ZERO);
+				String _csv2 = calculatorFullBean.getCsv(true, CompressionLevel.ZERO);
+
+				logger.log(Level.INFO, "1.csv: {0}", _csv1.split(",").length);
+				logger.log(Level.INFO, "1.csv: {0}", _csv1);
+				logger.log(Level.INFO, "2.csv: {0}", _csv2.split(",").length);
+				logger.log(Level.INFO, "1.csv: {0}", _csv2);
 			}
-			assertEquals(csv1, csv2);
+			logger.log(Level.INFO, "1.csv: {0}", csv1);
+			logger.log(Level.INFO, "2.csv: {0}", csv2);
+			String[] elements1 = csv1.split(",");
+			String[] elements2 = csv2.split(",");
+			assertEquals(elements1.length, elements2.length);
+
+			for (int i = 0; i<elements1.length; i++) {
+				if (!elements1[i].equals(elements2[i]))
+					System.err.printf("Difference at %s vs %s (%d): %s vs %s\n", header1.get(i), header2.get(i), i, elements1[i], elements2[i]);
+			}
+
+			assertEquals("Normal and fullbean calculation should have the same results.", csv1, csv2);
 		}
 	}
 
@@ -1899,11 +1927,9 @@ public class DocumentTransformerTest {
 	}
 
 	private void testLanguages(Document record, String id) {
-		// System.err.println(id);
 		if (record == null) {
 			return;
 		}
-		// System.err.println(record.toJson(codec));
 		assertNotNull(record);
 		for (String key : record.keySet()) {
 			if (key.contains(":")
@@ -1911,8 +1937,9 @@ public class DocumentTransformerTest {
 					  && ((List)record.get(key)).size() > 0
 					  && ((List)record.get(key)).get(0) instanceof Document)
 			{
-				// System.err.println(String.format("%s", key));
 				List<Document> entities = (List)record.get(key);
+				if (entities.isEmpty())
+					continue;
 				for (Document entity : entities) {
 					for (String ekey : entity.keySet()) {
 						if (entity.get(ekey) instanceof Document) {
