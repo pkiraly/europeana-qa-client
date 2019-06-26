@@ -3,6 +3,7 @@ package de.gwdg.europeanaqa.client.rest.config;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import de.gwdg.europeanaqa.api.calculator.EdmCalculatorFacade;
+import de.gwdg.europeanaqa.api.model.Format;
 import de.gwdg.europeanaqa.client.rest.DocumentTransformer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -131,6 +132,26 @@ public class ApplicationConfiguration {
     if (runUniqueness)
       calculator.configureSolr(solrHost, solrHost, solrPath);
     return calculator;
+  }
+
+  @Bean(name = "proxyBasedCompletenessCalculator")
+  EdmCalculatorFacade getProxyBasedCompletenessCalculator() {
+
+    final EdmCalculatorFacade facade = new EdmCalculatorFacade();
+    facade.abbreviate(true);
+    facade.enableProxyBasedCompleteness(true);
+    facade.enableCompletenessMeasurement(false);
+    facade.enableFieldCardinalityMeasurement(false);
+    facade.enableFieldExistenceMeasurement(false);
+    facade.enableTfIdfMeasurement(false);
+    facade.enableProblemCatalogMeasurement(false);
+    facade.setExtendedFieldExtraction(true);
+    // facade.setCheckSkippableCollections(checkSkippableCollections);
+    // if (format != null)
+    //   facade.setFormat(format);
+    facade.configure();
+
+    return facade;
   }
 
   @Bean(name = "PropertiesFile")

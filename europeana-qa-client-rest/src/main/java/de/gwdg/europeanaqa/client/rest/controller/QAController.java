@@ -71,6 +71,9 @@ public class QAController {
   @Autowired
   private EdmCalculatorFacade jsonCalculator;
 
+  @Autowired
+  private EdmCalculatorFacade proxyBasedCompletenessCalculator;
+
   // @Autowired
   // private MongoMappingDao mongoMappingDao;
   @Autowired
@@ -236,6 +239,30 @@ public class QAController {
     if (config.getRunUniqueness()) {
       result.setTermsCollection(jsonCalculator.getTermsCollection());
     }
+
+    return result;
+  }
+
+  @RequestMapping(
+    value = "/completeness/{part1}/{part2}.json",
+    method = RequestMethod.GET,
+    produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+  )
+  public @ResponseBody
+  Result getCompletenessJson(
+    @PathVariable("part1") String part1,
+    @PathVariable("part2") String part2,
+    @RequestParam(value = "sessionId", required = false) String sessionId,
+    @RequestParam(value = "dataSource", required = false) String dataSource
+  ) throws URISyntaxException, IOException {
+    dataSource = checkDataSource(dataSource);
+    String recordId = getRecordId(dataSource, part1, part2);
+    String json = getRecordAsJson(dataSource, recordId);
+
+    proxyBasedCompletenessCalculator.measure(json);
+
+    Result result = new Result();
+    result.setLabelledResults(jsonCalculator.getLabelledResults());
 
     return result;
   }
