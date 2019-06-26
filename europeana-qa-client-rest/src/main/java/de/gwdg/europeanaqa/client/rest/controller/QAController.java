@@ -231,8 +231,8 @@ public class QAController {
     Result result = new Result();
     result.setLabelledResults(jsonCalculator.getLabelledResults());
     // result.setExistingFields(jsonCalculator.getExistingFields());
-    result.setMissingFields(jsonCalculator.getMissingFields());
-    result.setEmptyFields(jsonCalculator.getEmptyFields());
+    // result.setMissingFields(jsonCalculator.getMissingFields());
+    // result.setEmptyFields(jsonCalculator.getEmptyFields());
     if (config.getRunUniqueness()) {
       result.setTermsCollection(jsonCalculator.getTermsCollection());
     }
