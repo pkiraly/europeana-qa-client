@@ -262,7 +262,7 @@ public class QAController {
     proxyBasedCompletenessCalculator.measure(json);
 
     Result result = new Result();
-    result.setLabelledResults(jsonCalculator.getLabelledResults());
+    result.setLabelledResults(proxyBasedCompletenessCalculator.getLabelledResults());
 
     return result;
   }
