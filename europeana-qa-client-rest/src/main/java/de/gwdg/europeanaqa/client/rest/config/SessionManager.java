@@ -9,63 +9,63 @@ import java.util.UUID;
  * @author Péter Király <peter.kiraly at gwdg.de>
  */
 public class SessionManager {
-	
-	private final Map<String, SessionDAO> sessionIds;
 
-	public SessionManager() {
-		this.sessionIds = new HashMap<>();
-	}
+  private final Map<String, SessionDAO> sessionIds;
 
-	public String create() {
-		String sessionId = UUID.randomUUID().toString();
-		sessionIds.put(sessionId, new SessionDAO(sessionId, SessionDAO.State.MEASURING));
-		return sessionId;
-	}
+  public SessionManager() {
+    this.sessionIds = new HashMap<>();
+  }
 
-	public boolean validate(String sessionId) {
-		return sessionIds.containsKey(sessionId);
-	}
+  public String create() {
+    String sessionId = UUID.randomUUID().toString();
+    sessionIds.put(sessionId, new SessionDAO(sessionId, SessionDAO.State.MEASURING));
+    return sessionId;
+  }
 
-	public void delete(String sessionId) {
-		if (!validate(sessionId)) {
-			throw new IllegalArgumentException("The session identifier is not valid");
-		}
-		sessionIds.remove(sessionId);
-	}
+  public boolean validate(String sessionId) {
+    return sessionIds.containsKey(sessionId);
+  }
 
-	public SessionDAO get(String sessionId) {
-		if (!validate(sessionId)) {
-			throw new IllegalArgumentException("The session identifier is not valid");
-		}
-		return sessionIds.get(sessionId);
-	}
+  public void delete(String sessionId) {
+    if (!validate(sessionId)) {
+      throw new IllegalArgumentException("The session identifier is not valid");
+    }
+    sessionIds.remove(sessionId);
+  }
 
-	public SessionDAO.State getState(String sessionId) {
-		if (!validate(sessionId)) {
-			throw new IllegalArgumentException("The session identifier is not valid");
-		}
-		return sessionIds.get(sessionId).getState();
-	}
+  public SessionDAO get(String sessionId) {
+    if (!validate(sessionId)) {
+      throw new IllegalArgumentException("The session identifier is not valid");
+    }
+    return sessionIds.get(sessionId);
+  }
 
-	public void setState(String sessionId, SessionDAO.State state) {
-		if (!validate(sessionId)) {
-			throw new IllegalArgumentException("The session identifier is not valid");
-		}
-		sessionIds.get(sessionId).setState(state);
-	}
+  public SessionDAO.State getState(String sessionId) {
+    if (!validate(sessionId)) {
+      throw new IllegalArgumentException("The session identifier is not valid");
+    }
+    return sessionIds.get(sessionId).getState();
+  }
 
-	public Process getAnalyzingProcess(String sessionId) {
-		if (!validate(sessionId)) {
-			throw new IllegalArgumentException("The session identifier is not valid");
-		}
-		return sessionIds.get(sessionId).getAnalzyingProcess();
-	}
+  public void setState(String sessionId, SessionDAO.State state) {
+    if (!validate(sessionId)) {
+      throw new IllegalArgumentException("The session identifier is not valid");
+    }
+    sessionIds.get(sessionId).setState(state);
+  }
 
-	public void setAnalyzingProcess(String sessionId, Process analyzingProcess) {
-		if (!validate(sessionId)) {
-			throw new IllegalArgumentException("The session identifier is not valid");
-		}
-		sessionIds.get(sessionId).setAnalzyingProcess(analyzingProcess);
-	}
+  public Process getAnalyzingProcess(String sessionId) {
+    if (!validate(sessionId)) {
+      throw new IllegalArgumentException("The session identifier is not valid");
+    }
+    return sessionIds.get(sessionId).getAnalzyingProcess();
+  }
+
+  public void setAnalyzingProcess(String sessionId, Process analyzingProcess) {
+    if (!validate(sessionId)) {
+      throw new IllegalArgumentException("The session identifier is not valid");
+    }
+    sessionIds.get(sessionId).setAnalzyingProcess(analyzingProcess);
+  }
 
 }
