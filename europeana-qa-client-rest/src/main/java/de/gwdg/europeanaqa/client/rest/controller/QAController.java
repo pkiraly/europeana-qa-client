@@ -228,7 +228,7 @@ public class QAController {
   ) throws URISyntaxException, IOException {
     dataSource = checkDataSource(dataSource);
     String recordId = getRecordId(dataSource, part1, part2);
-    String json = getRecordAsJson(dataSource, recordId);
+    String json = getRecordAsJson(dataSource, recordId, false);
 
     if (config.getRunUniqueness()) {
       jsonCalculator.collectTfIdfTerms(true);
