@@ -230,7 +230,7 @@ public class QAController {
 
     Result result = new Result();
     result.setLabelledResults(jsonCalculator.getLabelledResults());
-    result.setExistingFields(jsonCalculator.getExistingFields());
+    // result.setExistingFields(jsonCalculator.getExistingFields());
     result.setMissingFields(jsonCalculator.getMissingFields());
     result.setEmptyFields(jsonCalculator.getEmptyFields());
     if (config.getRunUniqueness()) {

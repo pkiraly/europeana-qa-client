@@ -124,7 +124,6 @@ public class ApplicationConfiguration {
     calculator.enableProxyBasedCompleteness(true);
     calculator.enableMultilingualSaturationMeasurement(true);
     calculator.setExtendedFieldExtraction(true);
-    calculator.setExtendedFieldExtraction(true);
     calculator.completenessCollectFields(true);
     if (runUniqueness)
       calculator.enableTfIdfMeasurement(true);
