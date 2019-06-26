@@ -146,9 +146,8 @@ public class ApplicationConfiguration {
     facade.enableTfIdfMeasurement(false);
     facade.enableProblemCatalogMeasurement(false);
     facade.setExtendedFieldExtraction(true);
-    // facade.setCheckSkippableCollections(checkSkippableCollections);
-    // if (format != null)
-    //   facade.setFormat(format);
+    facade.setCheckSkippableCollections(false);
+    facade.setFormat(Format.FULLBEAN);
     facade.configure();
 
     return facade;
