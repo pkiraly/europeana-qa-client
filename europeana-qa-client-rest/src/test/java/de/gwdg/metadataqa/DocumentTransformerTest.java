@@ -1,6 +1,5 @@
 package de.gwdg.metadataqa;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -8,17 +7,22 @@ import com.jayway.jsonpath.InvalidJsonException;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import de.gwdg.europeanaqa.api.model.Format;
 import de.gwdg.europeanaqa.api.calculator.EdmCalculatorFacade;
 import de.gwdg.europeanaqa.client.rest.DocumentTransformer;
+import de.gwdg.metadataqa.api.util.CompressionLevel;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import static junit.framework.TestCase.*;
 
-import de.gwdg.metadataqa.api.util.CompressionLevel;
+import static junit.framework.TestCase.*;
+import static org.junit.Assert.assertNotNull;
+import org.junit.Before;
+import org.junit.Test;
+
 import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.codecs.BsonTypeClassMap;
@@ -26,9 +30,6 @@ import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-import static org.junit.Assert.assertNotNull;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  *
@@ -90,7 +91,7 @@ public class DocumentTransformerTest {
 		calculatorFullBean.completenessCollectFields(false);
 		calculatorFullBean.enableLanguageMeasurement(false);
 		calculatorFullBean.enableMultilingualSaturationMeasurement(true);
-		calculatorFullBean.setFormat(EdmCalculatorFacade.Formats.FULLBEAN);
+		calculatorFullBean.setFormat(Format.FULLBEAN);
 		calculatorFullBean.configure();
 
 		transformer = new DocumentTransformer(mongoDb);
