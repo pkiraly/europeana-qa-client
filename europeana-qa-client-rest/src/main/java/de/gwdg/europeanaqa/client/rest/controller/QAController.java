@@ -229,7 +229,8 @@ public class QAController {
     dataSource = checkDataSource(dataSource);
     String recordId = getRecordId(dataSource, part1, part2);
     String json = getRecordAsJson(dataSource, recordId, false);
-
+    logger.severe("json: " + json);
+    
     if (config.getRunUniqueness()) {
       jsonCalculator.collectTfIdfTerms(true);
     }
@@ -264,7 +265,7 @@ public class QAController {
     String recordId = getRecordId(dataSource, part1, part2);
     logger.severe("recordId: " + recordId);
     String json = getRecordAsJson(dataSource, recordId, false);
-    logger.severe("json: " + json);
+    // logger.severe("json: " + json);
 
     proxyBasedCompletenessCalculator.measure(json);
 
