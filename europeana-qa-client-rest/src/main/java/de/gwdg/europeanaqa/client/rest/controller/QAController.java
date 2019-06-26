@@ -256,8 +256,11 @@ public class QAController {
     @RequestParam(value = "dataSource", required = false) String dataSource
   ) throws URISyntaxException, IOException {
     dataSource = checkDataSource(dataSource);
+    logger.info("dataSource: " + dataSource);
     String recordId = getRecordId(dataSource, part1, part2);
+    logger.info("recordId: " + recordId);
     String json = getRecordAsJson(dataSource, recordId);
+    logger.info("json: " + json);
 
     proxyBasedCompletenessCalculator.measure(json);
 
