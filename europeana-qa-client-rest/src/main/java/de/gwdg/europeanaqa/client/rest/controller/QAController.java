@@ -149,10 +149,14 @@ public class QAController {
   }
 
   private String getRecordAsJson(String dataSource, String recordId) {
+    return getRecordAsJson(dataSource, recordId, true);
+  }
+
+  private String getRecordAsJson(String dataSource, String recordId, boolean withFieldRename) {
     if (dataSource.equals("cassandra"))
       return getRecordAsJsonFromCassandra(recordId);
     else
-      return getRecordAsJsonFromMongo(recordId);
+      return getRecordAsJsonFromMongo(recordId, withFieldRename);
   }
 
   private String getRecordId(String dataSource, String part1, String part2) {
@@ -259,7 +263,7 @@ public class QAController {
     logger.severe("dataSource: " + dataSource);
     String recordId = getRecordId(dataSource, part1, part2);
     logger.severe("recordId: " + recordId);
-    String json = getRecordAsJson(dataSource, recordId);
+    String json = getRecordAsJson(dataSource, recordId, false);
     logger.severe("json: " + json);
 
     proxyBasedCompletenessCalculator.measure(json);
@@ -437,9 +441,13 @@ public class QAController {
   }
 
   private String getRecordAsJsonFromMongo(String recordId) {
+    return getRecordAsJsonFromMongo(recordId, true);
+  }
+
+  private String getRecordAsJsonFromMongo(String recordId, boolean withFieldRename) {
     Bson condition = Filters.eq("about", recordId);
     Document record = mongoDb.getCollection("record").find(condition).first();
-    transformer.transform(record);
+    transformer.transform(record, withFieldRename);
     String json = record.toJson(codec);
     // logger.info("record: " + json);
     return json;
