@@ -126,6 +126,7 @@ public class ApplicationConfiguration {
     calculator.enableMultilingualSaturationMeasurement(true);
     calculator.setExtendedFieldExtraction(true);
     calculator.completenessCollectFields(true);
+    calculator.setFormat(Format.FULLBEAN);
     if (runUniqueness)
       calculator.enableTfIdfMeasurement(true);
     calculator.configure();

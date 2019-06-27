@@ -230,7 +230,7 @@ public class QAController {
     String recordId = getRecordId(dataSource, part1, part2);
     String json = getRecordAsJson(dataSource, recordId, false);
     logger.severe("json: " + json);
-    
+
     if (config.getRunUniqueness()) {
       jsonCalculator.collectTfIdfTerms(true);
     }
