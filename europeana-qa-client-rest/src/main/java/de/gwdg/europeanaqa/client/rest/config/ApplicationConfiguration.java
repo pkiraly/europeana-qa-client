@@ -85,6 +85,7 @@ public class ApplicationConfiguration {
 
   @Bean
   MongoDatabase getMongoDatabase() {
+    logger.info("getMongoDatabase");
     if (mongoDb == null) {
       logger.info(String.format("user: %s, pw: %s, host: %s, port: %s", mongoUser, mongoPassword, mongoHost, mongoPort));
       MongoClient mongoClient = null;
@@ -195,6 +196,7 @@ public class ApplicationConfiguration {
 
   @Bean
   DocumentTransformer getDocumentTransformer() {
+    logger.info("getDocumentTransformer");
     return new DocumentTransformer(getMongoDatabase());
   }
 
