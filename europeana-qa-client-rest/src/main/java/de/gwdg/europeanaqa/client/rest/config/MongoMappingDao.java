@@ -9,6 +9,6 @@ import org.mongodb.morphia.Morphia;
  */
 public class MongoMappingDao {
 
-	public MongoMappingDao(Morphia morphia, MongoClient mongo, String database) {
-	}
+  public MongoMappingDao(Morphia morphia, MongoClient mongo, String database) {
+  }
 }

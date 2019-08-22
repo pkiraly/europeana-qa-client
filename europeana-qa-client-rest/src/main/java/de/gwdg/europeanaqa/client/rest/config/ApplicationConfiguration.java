@@ -1,12 +1,16 @@
 package de.gwdg.europeanaqa.client.rest.config;
 
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import com.mongodb.MongoCredential;
 import com.mongodb.client.MongoDatabase;
 import de.gwdg.europeanaqa.api.calculator.EdmCalculatorFacade;
 import de.gwdg.europeanaqa.api.model.Format;
 import de.gwdg.europeanaqa.client.rest.DocumentTransformer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.apache.commons.lang3.StringUtils;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -44,6 +48,15 @@ public class ApplicationConfiguration {
   @Value("${mongo.db:europeana}")
   String mongoDatabase;
 
+  @Value("${mongo.user:}")
+  String mongoUser;
+
+  @Value("${mongo.password:}")
+  String mongoPassword;
+
+  @Value("${mongo.userDb:}")
+  String mongoUserDb;
+
   @Value("${solr.host:localhost}")
   String solrHost;
 
@@ -73,7 +86,20 @@ public class ApplicationConfiguration {
   @Bean
   MongoDatabase getMongoDatabase() {
     if (mongoDb == null) {
-      MongoClient mongoClient = new MongoClient(mongoHost, mongoPort);
+      MongoClient mongoClient = null;
+      if (StringUtils.isNotBlank(mongoUser) && StringUtils.isNotBlank(mongoPassword) && StringUtils.isNotBlank(mongoUserDb)) {
+        String url = String.format(
+          "mongodb://%s:%s@%s:%s/%s?authSource=%s&gssapiServiceName=mongodb",
+          mongoUser, mongoPassword,
+          mongoHost, mongoPort,
+          mongoUserDb
+        );
+        MongoClientURI uri = new MongoClientURI(url);
+        mongoClient = new MongoClient(uri);
+      } else {
+        // MongoCredential cred = MongoCredential.createCredential(mongoUser, mongoUserDb, mongoPassword.toCharArray());
+        mongoClient = new MongoClient(mongoHost, mongoPort);
+      }
       mongoDb = mongoClient.getDatabase(mongoDatabase); //
     }
     return mongoDb;
