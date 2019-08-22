@@ -86,6 +86,7 @@ public class ApplicationConfiguration {
   @Bean
   MongoDatabase getMongoDatabase() {
     if (mongoDb == null) {
+      logger.info(String.format("user: %s, pw: %s, host: %s, port: %s", mongoUser, mongoPassword, mongoHost, mongoPort));
       MongoClient mongoClient = null;
       if (StringUtils.isNotBlank(mongoUser) && StringUtils.isNotBlank(mongoPassword) && StringUtils.isNotBlank(mongoUserDb)) {
         String url = String.format(
