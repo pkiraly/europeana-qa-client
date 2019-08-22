@@ -92,8 +92,9 @@ public class ApplicationConfiguration {
           "mongodb://%s:%s@%s:%s/%s?authSource=%s&gssapiServiceName=mongodb",
           mongoUser, mongoPassword,
           mongoHost, mongoPort,
-          mongoUserDb
+          mongoDatabase, mongoUserDb
         );
+        logger.info(url);
         MongoClientURI uri = new MongoClientURI(url);
         mongoClient = new MongoClient(uri);
       } else {
