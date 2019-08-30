@@ -115,7 +115,7 @@ public class QAController {
       @RequestParam(value = "sessionId", required = false) String sessionId,
       @RequestParam(value = "dataSource", required = false) String dataSource,
       @RequestParam(value = "batchMode", required = false, defaultValue = "false") boolean batchMode,
-      @RequestParam(value = "withFieldRename", required = false, defaultValue = "false") boolean withFieldRename
+      @RequestParam(value = "withFieldRename", required = false, defaultValue = "true") boolean withFieldRename
   )
       throws URISyntaxException, IOException {
     dataSource = checkDataSource(dataSource);
