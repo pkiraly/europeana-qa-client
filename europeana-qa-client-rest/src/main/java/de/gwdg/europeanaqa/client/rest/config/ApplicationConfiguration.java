@@ -100,6 +100,7 @@ public class ApplicationConfiguration {
         MongoClientURI uri = new MongoClientURI(url);
         mongoClient = new MongoClient(uri);
       } else {
+        logger.info("normal setup");
         // MongoCredential cred = MongoCredential.createCredential(mongoUser, mongoUserDb, mongoPassword.toCharArray());
         mongoClient = new MongoClient(mongoHost, mongoPort);
       }
