@@ -449,8 +449,13 @@ public class QAController {
   private String getRecordAsJsonFromMongo(String recordId, boolean withFieldRename) {
     Bson condition = Filters.eq("about", recordId);
     Document record = mongoDb.getCollection("record").find(condition).first();
-    transformer.transform(record, withFieldRename);
-    String json = record.toJson(codec);
+    String json = "";
+    if (record == null) {
+      logger.severe("The record does not exist");
+    } else {
+      transformer.transform(record, withFieldRename);
+      json = record.toJson(codec);
+    }
     // logger.info("record: " + json);
     return json;
   }
